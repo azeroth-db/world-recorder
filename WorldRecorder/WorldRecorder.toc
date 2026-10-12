@@ -1,0 +1,9 @@
+## Interface: 16001
+## Title: World Recorder
+## Notes: Records quest givers, drops and drop rates, vendors, trainers, flight paths and where creatures and gathering nodes are, for wowdb.wiki.
+## Author: Azeroth DB
+## Version: 1.2.1
+## X-Website: https://wowdb.wiki
+## SavedVariables: WorldRecorderDB, WorldRecorderUI, WorldRecorderCharacters
+
+WorldRecorder.lua
