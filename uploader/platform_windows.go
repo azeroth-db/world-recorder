@@ -193,3 +193,8 @@ func unregister() error {
 		return nil
 	})
 }
+
+func computerName() string {
+	name, _ := os.Hostname()
+	return name
+}

@@ -83,7 +83,11 @@ func (s *state) sent(path, key, hash string) bool {
 	return s.ledger.Key == digest(key) && s.ledger.Saves[digest(path)] == hash
 }
 
+// acknowledge merges into the ledger on disk: setup and the login item can both pass right after a link.
 func (s *state) acknowledge(path, key, hash string) error {
+	if err := s.readLedger(); err != nil {
+		s.ledger = ledger{}
+	}
 	if s.ledger.Key != digest(key) || s.ledger.Saves == nil {
 		s.ledger = ledger{Key: digest(key), Saves: map[string]string{}}
 	}
@@ -95,13 +99,24 @@ func (s *state) acknowledge(path, key, hash string) error {
 	return s.write("ledger.json", append(data, '\n'))
 }
 
+// write replaces the file through a temporary file of its own, so two processes never write one temporary path.
 func (s *state) write(name string, data []byte) error {
-	temp := s.path(name + ".tmp")
-	os.Remove(temp)
-	if err := os.WriteFile(temp, data, 0o600); err != nil {
+	temp, err := os.CreateTemp(s.dir, name+".*.tmp")
+	if err != nil {
 		return err
 	}
-	return os.Rename(temp, s.path(name))
+	defer os.Remove(temp.Name())
+	_, err = temp.Write(data)
+	if closeErr := temp.Close(); err == nil {
+		err = closeErr
+	}
+	if err == nil {
+		err = os.Chmod(temp.Name(), 0o600)
+	}
+	if err != nil {
+		return err
+	}
+	return os.Rename(temp.Name(), s.path(name))
 }
 
 func (s *state) readKey() string {

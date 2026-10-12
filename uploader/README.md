@@ -38,13 +38,16 @@ the account that confirmed the link.
    has a WoW Forever client. It deletes the old addon folder first. It stops when no
    install folder has one.
 3. It registers the copy to start at login with the `run` command and starts it. On
-   macOS it writes `~/Library/LaunchAgents/wiki.wowdb.recorder-uploader.plist` and loads
-   it with `launchctl`. On Windows it ends running copies of the uploader, writes the
+   macOS it writes `~/Library/LaunchAgents/wiki.wowdb.recorder-uploader.plist` with
+   `KeepAlive`, so launchd starts it again whenever it stops, and loads it with `launchctl`. On Windows it ends running copies of the uploader, writes the
    value `WowdbRecorderUploader` under
-   `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` and starts the copy.
-4. It runs `link` when no key is stored, and right after linking makes one pass, so the
-   account page that confirmed the link shows the records while it is still open.
-5. It shows one dialog with the result.
+   `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` and starts the copy; a copy that
+   is stopped starts again at the next sign-in.
+4. It runs `link` when no key is stored or the site refuses the stored one, and right after
+   linking makes one pass, so the profile that confirmed the link shows the records while it
+   is still open.
+5. From a double-click it speaks through the browser: linking ends on the profile, an already
+   linked computer opens the profile, and only a failure shows a dialog.
 
 A double-click starts `setup`: the program starts with no arguments and without a
 terminal. Players download `WorldRecorder-mac.zip`, unpack it and open
@@ -63,16 +66,21 @@ running uploader. On Windows the running uploader stops at the next logout.
 Every send carries the key of the player's wowdb.wiki account, so a moderator can stop
 records from an account that sends false data. `link` gets the key:
 
-1. It sends `POST /api/contrib/link` with `{"label": "<computer name>"}` to the site of
-   `--endpoint` and opens the address in the answer in the browser. It also prints the
-   code shown there.
-2. The player signs in on that page and confirms the code.
-3. The uploader asks `POST /api/contrib/link/poll` every 5 seconds, the default polling
-   interval of RFC 8628 section 3.5, until the answer is `linked` or `expired`.
-4. It stores the key in the file `key` with mode 0600. The key is never passed in an
-   argument and never written to the log.
+1. It listens on `127.0.0.1` and sends `POST /api/contrib/link` with the computer name, the
+   challenge of a random verifier and its port, then opens the address in the answer in the
+   browser.
+2. The player signs in on that page if needed and clicks Link this computer. The browser comes
+   to the uploader's listener with a one-time grant.
+3. The uploader trades grant and verifier for the key at `POST /api/contrib/link/token`, stores
+   it in the file `key` with mode 0600, and sends the browser back to the player's profile. The
+   key is never passed in an argument and never written to the log.
 
-The computer name is sent only here, as the key's name on the player's account page.
+Opened again from a double-click, setup asks the site whether the stored key still links the
+computer; an unlinked key is dropped and linking starts again. An already linked computer opens
+the profile. Only a failure shows a dialog.
+
+On macOS the computer name is the one Finder shows (`scutil --get ComputerName`); on Windows it
+is the host name. It is sent only here, as the key's name on the player's account page.
 
 Server answers to a send:
 
@@ -80,7 +88,7 @@ Server answers to a send:
 |---|---|
 | 200 | The ledger records the save as sent. |
 | 401 | The server does not know the key or it was revoked. The uploader deletes `key`, keeps the save unsent and logs that this computer must be linked again with `setup` or `link`. |
-| 403 | The account may not send records. The uploader logs it and stops: `run` exits and `--once` sends nothing more. |
+| 403 | The account may not send records. The uploader logs it and sends nothing more in that pass; `run` keeps watching and tries again only when a save changes. `--once` exits with the error. |
 
 Without a key, `run` keeps watching and logs that the computer is not linked. It reads
 `key` on every check, so a later `link` takes effect without a restart.
@@ -134,7 +142,7 @@ Delete `ledger.json` to send every save again.
 | Command | Effect |
 |---|---|
 | none | `setup` when started without a terminal, otherwise `run`. |
-| `setup` | Install the uploader and the addon, register the login item, link when no key is stored and show the result in a dialog. |
+| `setup` | Install the uploader and the addon, register the login item, link when no key is stored or the site refuses it, then open the profile; a failure shows a dialog. |
 | `install` | `setup`, printing the result instead of a dialog. |
 | `link` | Link this computer to a wowdb.wiki account and store the key. |
 | `run` | Make a pass, then watch and send until stopped. |

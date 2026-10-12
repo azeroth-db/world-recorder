@@ -17,16 +17,21 @@ const foreverFlavor = "_classic_beta_"
 //go:embed addon
 var addonFiles embed.FS
 
+// setup from a double-click speaks through the browser: linking ends on the player's profile, an already linked
+// computer opens it, and only a failure shows a dialog.
 func (s *state) setup(opts options, dialog bool) error {
+	linked := s.keyAccepted(opts.endpoint)
 	report, err := s.installAll(opts)
-	if !dialog {
+	switch {
+	case !dialog:
 		fmt.Println(strings.Join(report, "\n"))
-		return err
+	case err != nil:
+		showDialog(err.Error(), true)
+	case linked:
+		if base, err := siteBase(opts.endpoint); err == nil {
+			openBrowser(base + "/account")
+		}
 	}
-	if err != nil {
-		report = append(report, err.Error())
-	}
-	showDialog(strings.Join(report, "\n\n"), err != nil)
 	return err
 }
 
@@ -81,7 +86,7 @@ func installAddon(roots []string) ([]string, error) {
 		installed = append(installed, addons)
 	}
 	if len(installed) == 0 {
-		return nil, fmt.Errorf("No WoW Forever client (%s) was found in %s.", foreverFlavor, strings.Join(roots, ", "))
+		return nil, errors.New("WoW Forever was not found on this computer. Install it with the Battle.net app, then open World Recorder again.")
 	}
 	return installed, nil
 }

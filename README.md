@@ -8,7 +8,7 @@ A companion uploader sends the saved data to [wowdb.wiki](https://wowdb.wiki), w
 
 - Install and downloads: [wowdb.wiki/news/wow-forever-world-recorder](https://wowdb.wiki/news/wow-forever-world-recorder)
 - About the addon: [azeroth-db.github.io/world-recorder.html](https://azeroth-db.github.io/world-recorder.html)
-- Releases: the addon zip, the macOS app and the Windows setup are attached to each [release](../../releases).
+- Releases: the addon zip, the macOS app and the Windows setup are attached to each [release](https://github.com/azeroth-db/world-recorder/releases).
 
 ## What it records
 

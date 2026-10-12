@@ -93,16 +93,13 @@ func (s *state) run(opts options) error {
 
 func (s *state) watch(opts options) error {
 	seen, key := snapshot(findSaves(installs(opts.wow))), s.readKey()
-	if _, err := s.pass(opts.wow, opts.endpoint); err != nil {
-		return err
-	}
+	// A refused pass is logged and retried on the next change: the login item keeps this process alive.
+	s.pass(opts.wow, opts.endpoint)
 	wasRunning := s.gameRunning()
 	for range time.Tick(pollInterval) {
 		running, current, currentKey := s.gameRunning(), snapshot(findSaves(installs(opts.wow))), s.readKey()
 		if running && !wasRunning || !maps.Equal(current, seen) || currentKey != key {
-			if _, err := s.pass(opts.wow, opts.endpoint); err != nil {
-				return err
-			}
+			s.pass(opts.wow, opts.endpoint)
 		}
 		wasRunning, seen, key = running, current, currentKey
 	}

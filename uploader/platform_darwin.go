@@ -128,9 +128,19 @@ func agentPlist(program []string) []byte {
 	<key>RunAtLoad</key>
 	<true/>
 	<key>KeepAlive</key>
-	<false/>
+	<true/>
 </dict>
 </plist>
 `)
 	return []byte(b.String())
+}
+
+// computerName is the name Finder and Sharing show, such as "Eugene's MacBook Pro".
+func computerName() string {
+	out, err := exec.Command("scutil", "--get", "ComputerName").Output()
+	if name := strings.TrimSpace(string(out)); err == nil && name != "" {
+		return name
+	}
+	name, _ := os.Hostname()
+	return strings.TrimSuffix(name, ".local")
 }
