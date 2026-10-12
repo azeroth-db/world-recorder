@@ -7,7 +7,7 @@ A companion uploader sends the saved data to [wowdb.wiki](https://wowdb.wiki), w
 [profile](https://wowdb.wiki/account) shows your characters and what you recorded.
 
 - Install and downloads: [wowdb.wiki/news/wow-forever-world-recorder](https://wowdb.wiki/news/wow-forever-world-recorder)
-- About the addon: [wowdb-wiki.github.io/world-recorder.html](https://wowdb-wiki.github.io/world-recorder.html)
+- About the addon: [azeroth-db.github.io/world-recorder.html](https://azeroth-db.github.io/world-recorder.html)
 - Releases: the addon zip, the macOS app and the Windows setup are attached to each [release](../../releases).
 
 ## What it records
