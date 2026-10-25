@@ -88,8 +88,9 @@ a newer version and automatic updates are on, the uploader updates itself (see
 2. It installs the World Recorder addon of the signed `release.json` (see
    [Addon package](#addon-package)) into
    `<validated install>/<client folder>/Interface/AddOns/WorldRecorder`, its TOC's `## Interface:`
-   line set to the contract's interface numbers for that client. A pass, and the check every 15 minutes, installs it again when the
-   installed TOC differs from that, as after a game update, unless the player removed it, and installs
+   line set to the contract's interface numbers for that client and followed by `## X-Program: World Recorder`,
+   which tells the addon this program sends its saves, so it does not name the program at login. A pass, and the check every 15 minutes, installs it again when the
+   installed TOC differs from that, as after a game update or when an addon site replaced the copy, unless the player removed it, and installs
    it into a client folder the program sees for the first time, as when the contract adds WoW
    Forever's launch client (`clients-seen.json`). The client is
    revalidated immediately before replacement. Missing or ambiguous detection is resolved

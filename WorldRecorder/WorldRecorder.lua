@@ -3,10 +3,10 @@
 -- loot source drops. Sources are keyed by kind (Creature, GameObject, Item: a container opened from the bags) and game id.
 -- Every object a loot window opens is also kept as a gather with its exact position,
 -- the player's last cast and the skill ranks the player had, for the world map.
-local ADDON = ...
+local ADDON, ns = ...
 -- The version of this code, kept in the save: the client runs the files it loaded until the next reload, whatever
 -- the folder holds by then. publish.sh checks it against the TOC.
-local VERSION = "1.7.4"
+local VERSION = "1.7.5"
 local frame = CreateFrame("Frame")
 local counted, killed, casts = {}, {}, {}
 local lastCast, lastCastAt
@@ -1163,6 +1163,8 @@ local handlers = {
     install()
     db().toc, db().addon = select(4, GetBuildInfo()), VERSION
     skills() bindings() summary() saveButton()
+    -- The World Recorder program marks the copy it installs; any other copy names the program.
+    if not C_AddOns.GetAddOnMetadata(ADDON, "X-Program") then print(ns.LookupText.program) end
   end,
   PLAYER_ENTERING_WORLD = function()
     inWorld = true
@@ -1170,7 +1172,11 @@ local handlers = {
     combatLog()
   end,
   PLAYER_LEAVING_WORLD = function() inWorld = false end,
-  PLAYER_LOGOUT = function() character({}) end,
+  -- The seal goes last and is written even when the snapshot fails, or the next login would take the save for edited.
+  PLAYER_LOGOUT = function()
+    xpcall(function() character({}) end, geterrorhandler())
+    ns.writeSeal()
+  end,
   ACHIEVEMENT_EARNED = function() character(EVERY) end,
   PLAYER_LEVEL_UP = function() character(EVERY) end,
   ZONE_CHANGED_NEW_AREA = function()

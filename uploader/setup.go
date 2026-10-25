@@ -180,7 +180,7 @@ func addonInto(files fs.FS, i install) error {
 }
 
 // placeAddon writes the new addon beside the installed one and swaps the folders, so the game never sees half of it.
-// Its TOC names the contract's interface numbers for the client, so a new client version never marks it out of date.
+// Its TOC is programTOC's.
 func placeAddon(files fs.FS, addons, interfaces string) error {
 	if err := os.MkdirAll(addons, 0o755); err != nil {
 		return err
@@ -196,7 +196,7 @@ func placeAddon(files fs.FS, addons, interfaces string) error {
 	toc := filepath.Join(temp, "WorldRecorder", "WorldRecorder.toc")
 	data, err := os.ReadFile(toc)
 	if err == nil {
-		err = os.WriteFile(toc, withInterface(data, interfaces), 0o644)
+		err = os.WriteFile(toc, programTOC(data, interfaces), 0o644)
 	}
 	if err != nil {
 		return err
@@ -208,12 +208,18 @@ func placeAddon(files fs.FS, addons, interfaces string) error {
 	return os.RemoveAll(old)
 }
 
-// withInterface is a TOC whose Interface line names these interface numbers.
-func withInterface(toc []byte, interfaces string) []byte {
+// programTOC is the TOC this program installs: its Interface line names the contract's interface numbers for the client,
+// so a new client version never marks the addon out of date, and its X-Program line tells the addon that this program
+// sends its saves, so the addon does not name the program at login. A copy an addon site installs over it lacks the line,
+// and refreshAddons puts this one back.
+func programTOC(toc []byte, interfaces string) []byte {
 	var b strings.Builder
 	for line := range strings.Lines(string(toc)) {
-		if strings.HasPrefix(line, "## Interface:") {
-			line = "## Interface: " + interfaces + "\n"
+		switch {
+		case strings.HasPrefix(line, "## X-Program:"):
+			continue
+		case strings.HasPrefix(line, "## Interface:"):
+			line = "## Interface: " + interfaces + "\n## X-Program: World Recorder\n"
 		}
 		b.WriteString(line)
 	}
@@ -248,7 +254,7 @@ func (s *state) refreshAddons(endpoint string, found []install) {
 	for _, i := range found {
 		fresh := !first && !slices.Contains(seen, i.client())
 		installed, err := os.ReadFile(addonTOC(i))
-		if err != nil && !fresh || err == nil && bytes.Equal(installed, withInterface(built, i.interfaces)) {
+		if err != nil && !fresh || err == nil && bytes.Equal(installed, programTOC(built, i.interfaces)) {
 			handled = remember(handled, i.client())
 			continue
 		}
