@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"time"
@@ -18,23 +19,32 @@ type fileState struct {
 	modTime time.Time
 }
 
-func installs(wow string) []string {
-	if wow != "" {
-		return []string{wow}
+func installs(wow string) []install {
+	if wow == "" {
+		wow = savedGameFolder()
 	}
-	return defaultInstalls()
+	if wow != "" {
+		return validInstalls([]string{wow})
+	}
+	return validInstalls(defaultInstalls())
 }
 
-func findSaves(roots []string) []save {
+// folderReason says why the chosen game folder, or the default locations, hold no WoW Forever client World Recorder reads.
+func folderReason(wow string) error {
+	if wow == "" {
+		wow = savedGameFolder()
+	}
+	if wow == "" {
+		return errors.New("WoW Forever was not found automatically.")
+	}
+	_, err := validateInstall(wow)
+	return err
+}
+
+func findSaves(found []install) []save {
 	var saves []save
-	for _, root := range roots {
-		absolute, err := filepath.Abs(root)
-		if err != nil {
-			continue
-		}
-		for _, flavor := range subdirectories(absolute) {
-			saves = append(saves, flavorSaves(absolute, flavor)...)
-		}
+	for _, i := range found {
+		saves = append(saves, flavorSaves(i.root, i.folder)...)
 	}
 	return saves
 }
@@ -62,12 +72,22 @@ func subdirectories(dir string) []string {
 	return names
 }
 
+func stat(path string) fileState {
+	info, err := os.Stat(path)
+	if err != nil {
+		return fileState{}
+	}
+	return fileState{size: info.Size(), modTime: info.ModTime()}
+}
+
+func (f fileState) equal(other fileState) bool {
+	return f.size == other.size && f.modTime.Equal(other.modTime)
+}
+
 func snapshot(saves []save) map[string]fileState {
 	states := map[string]fileState{}
 	for _, s := range saves {
-		if info, err := os.Stat(s.path); err == nil {
-			states[s.path] = fileState{size: info.Size(), modTime: info.ModTime()}
-		}
+		states[s.path] = stat(s.path)
 	}
 	return states
 }

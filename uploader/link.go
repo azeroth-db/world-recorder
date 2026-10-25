@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"crypto/rand"
 	"crypto/sha256"
@@ -12,6 +11,9 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -23,9 +25,13 @@ type linkStart struct {
 	ExpiresAt json.RawMessage `json:"expiresAt"`
 }
 
-var errLinkExpired = errors.New("the link was not approved in time")
+var (
+	errLinkExpired = errors.New("the link was not approved in time")
+	errLinkStopped = errors.New("World Recorder was closed before the link was approved")
+)
 
-func (s *state) link(endpoint string) error {
+// link ends when stop is done, withdrawing the request; the caller decides which signals end it.
+func (s *state) link(stop context.Context, endpoint string) error {
 	base, err := siteBase(endpoint)
 	if err != nil {
 		return err
@@ -38,7 +44,7 @@ func (s *state) link(endpoint string) error {
 	verifier := base64.RawURLEncoding.EncodeToString(randomBytes())
 	challenge := sha256.Sum256([]byte(verifier))
 	var start linkStart
-	err = postJSON(base+"/api/contrib/link", map[string]any{
+	err = postJSON(stop, base+"/api/contrib/link", map[string]any{
 		"label":     computerName(),
 		"challenge": base64.RawURLEncoding.EncodeToString(challenge[:]),
 		"port":      listener.Addr().(*net.TCPAddr).Port,
@@ -52,15 +58,24 @@ func (s *state) link(endpoint string) error {
 		fmt.Println("Open that address in a browser.")
 	}
 	s.log("link result=started")
-	if deadline := expiry(start.ExpiresAt); !deadline.IsZero() {
-		return s.awaitGrant(listener, base, verifier, deadline)
+	deadline := expiry(start.ExpiresAt)
+	if deadline.IsZero() {
+		return errors.New("the link answer has no expiry")
 	}
-	return errors.New("the link answer has no expiry")
+	// Quitting, the deadline or a failure withdraws the request, so the page never sends the player to a closed listener.
+	err = s.awaitGrant(stop, listener, base, verifier, deadline)
+	if err != nil {
+		if address, parsed := url.Parse(start.URL); parsed == nil {
+			var answer struct{}
+			postJSON(context.Background(), base+"/api/contrib/link/cancel", map[string]string{"request": address.Query().Get("recorder"), "verifier": verifier}, &answer)
+		}
+	}
+	return err
 }
 
 // awaitGrant serves the one redirect the site sends after approval, trades its grant for the
-// key, and sends the browser back to the profile.
-func (s *state) awaitGrant(listener net.Listener, base, verifier string, deadline time.Time) error {
+// key, and sends the browser back to the site, which opens the World Recorder page.
+func (s *state) awaitGrant(stop context.Context, listener net.Listener, base, verifier string, deadline time.Time) error {
 	done := make(chan error, 1)
 	server := &http.Server{Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		grant := r.URL.Query().Get("grant")
@@ -72,7 +87,7 @@ func (s *state) awaitGrant(listener net.Listener, base, verifier string, deadlin
 			Key string `json:"key"`
 			ID  string `json:"id"`
 		}
-		err := postJSON(base+"/api/contrib/link/token", map[string]string{"grant": grant, "verifier": verifier}, &answer)
+		err := postJSON(context.Background(), base+"/api/contrib/link/token", map[string]string{"grant": grant, "verifier": verifier}, &answer)
 		if err == nil && answer.Key == "" {
 			err = errors.New("the site answered without a key")
 		}
@@ -103,6 +118,9 @@ func (s *state) awaitGrant(listener net.Listener, base, verifier string, deadlin
 	case <-time.After(time.Until(deadline)):
 		s.log("link result=expired")
 		return errLinkExpired
+	case <-stop.Done():
+		s.log("link result=stopped")
+		return errLinkStopped
 	}
 }
 
@@ -118,7 +136,7 @@ func (s *state) keyAccepted(endpoint string) bool {
 		return true
 	}
 	request.Header.Set("Authorization", "Bearer "+key)
-	response, err := http.DefaultClient.Do(request)
+	response, err := do(request)
 	if err != nil {
 		return true
 	}
@@ -131,18 +149,23 @@ func (s *state) keyAccepted(endpoint string) bool {
 	return true
 }
 
+// interrupted is done when the player quits a one-shot command or the system ends it.
+func interrupted() (context.Context, context.CancelFunc) {
+	return signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
+}
+
 func randomBytes() []byte {
 	b := make([]byte, 32)
 	rand.Read(b)
 	return b
 }
 
-func postJSON(address string, body, answer any) error {
+func postJSON(ctx context.Context, address string, body, answer any) error {
 	data, err := json.Marshal(body)
 	if err != nil {
 		return err
 	}
-	response, err := http.Post(address, "application/json", bytes.NewReader(data))
+	response, err := postBody(ctx, address, "application/json", data)
 	if err != nil {
 		return err
 	}

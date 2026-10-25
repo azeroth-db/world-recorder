@@ -1,0 +1,8 @@
+<Bindings>
+  <Binding name="WORLDRECORDERLOOKUP" header="WORLDRECORDERLOOKUP">
+    WorldRecorderLookupToggle();
+  </Binding>
+  <Binding name="WORLDRECORDERINSPECT">
+    WorldRecorderLookupInspect();
+  </Binding>
+</Bindings>

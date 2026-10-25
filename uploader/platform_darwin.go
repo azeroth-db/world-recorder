@@ -11,29 +11,20 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"syscall"
 )
 
 const (
-	agentLabel = "wiki.wowdb.recorder-uploader"
-	gameBinary = ".app/Contents/MacOS/World of Warcraft"
-	appName    = "World Recorder.app"
+	// bundleID is the app's CFBundleIdentifier in build.sh's Info.plist; Login Items settings name the agent after it.
+	bundleID = "wiki.wowdb.recorder-uploader"
+	appName  = "World Recorder.app"
 )
 
-func defaultInstalls() []string {
-	return []string{"/Applications/World of Warcraft"}
-}
+// agentLabel is a variable only so a test build can run under a label of its own (-ldflags -X main.agentLabel=...).
+var agentLabel = "wiki.wowdb.recorder-uploader"
 
-func gameRunning() (bool, error) {
-	out, err := exec.Command("ps", "-axo", "comm=").Output()
-	if err != nil {
-		return false, err
-	}
-	for line := range strings.Lines(string(out)) {
-		if strings.HasSuffix(strings.TrimSpace(line), gameBinary) {
-			return true, nil
-		}
-	}
-	return false, nil
+func defaultInstalls() []string {
+	return append(battleNetInstalls("/Users/Shared/Battle.net/Agent/product.db"), "/Applications/World of Warcraft")
 }
 
 func detachConsole() {}
@@ -82,29 +73,94 @@ func agentPath() (string, error) {
 func agentDomain() string { return "gui/" + strconv.Itoa(os.Getuid()) }
 
 func register(exe string, args []string) error {
-	path, err := agentPath()
+	path, err := writeAgent(exe, args)
 	if err != nil {
 		return err
 	}
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return err
-	}
-	if err := os.WriteFile(path, agentPlist(append([]string{exe}, args...)), 0o644); err != nil {
-		return err
-	}
-	exec.Command("launchctl", "bootout", agentDomain(), path).Run()
+	exec.Command("launchctl", "bootout", agentService()).Run()
 	return exec.Command("launchctl", "bootstrap", agentDomain(), path).Run()
 }
 
+// agentService names the loaded job, which launchd finds even after its file was removed.
+func agentService() string { return agentDomain() + "/" + agentLabel }
+
+func loginItemExists() bool {
+	path, err := agentPath()
+	if err != nil {
+		return false
+	}
+	_, err = os.Stat(path)
+	return err == nil
+}
+
+func writeAgent(exe string, args []string) (string, error) {
+	path, err := agentPath()
+	if err != nil {
+		return "", err
+	}
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return "", err
+	}
+	return path, os.WriteFile(path, agentPlist(append([]string{exe}, args...)), 0o644)
+}
+
+// setLoginItem writes or removes the agent file without loading or unloading it, so the running program stays;
+// launchd reads the change at the next login.
+func setLoginItem(on bool, exe string, args []string) error {
+	if on {
+		_, err := writeAgent(exe, args)
+		return err
+	}
+	path, err := agentPath()
+	if err == nil {
+		err = os.Remove(path)
+	}
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil
+	}
+	return err
+}
+
+// swapProgram puts the app, or the bare binary, from the release archive in place of the installed one and
+// returns where the previous one is kept.
+func swapProgram(archive, exe string) (string, error) {
+	temp, err := os.MkdirTemp(filepath.Dir(archive), "update-")
+	if err != nil {
+		return "", err
+	}
+	defer os.RemoveAll(temp)
+	if err := extractZip(archive, temp); err != nil {
+		return "", err
+	}
+	fresh, target := filepath.Join(temp, appName), programPath(exe)
+	if _, _, inner := bundle(exe); inner == "" {
+		fresh = filepath.Join(fresh, "Contents", "MacOS", "wowdb-recorder")
+	}
+	if err := errors.Join(os.RemoveAll(target+".new"), copyTree(fresh, target+".new")); err != nil {
+		return "", err
+	}
+	return swapIn(target+".new", target)
+}
+
+// restartProgram restarts the login item through launchd, or, started any other way, runs the new file in place.
+func restartProgram(exe string) error {
+	if os.Getenv("XPC_SERVICE_NAME") == agentLabel {
+		return exec.Command("launchctl", "kickstart", "-k", agentDomain()+"/"+agentLabel).Run()
+	}
+	return syscall.Exec(exe, os.Args, os.Environ())
+}
+
+// unregister removes the agent file, then unloads the job by its label; when this program is that job,
+// unloading ends it.
 func unregister() error {
 	path, err := agentPath()
 	if err != nil {
 		return err
 	}
-	exec.Command("launchctl", "bootout", agentDomain(), path).Run()
 	if err := os.Remove(path); err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return err
 	}
+	exec.Command("launchctl", "bootout", agentService()).Run()
 	return nil
 }
 
@@ -129,6 +185,10 @@ func agentPlist(program []string) []byte {
 	<true/>
 	<key>KeepAlive</key>
 	<true/>
+	<key>ProcessType</key>
+	<string>Background</string>
+	<key>AssociatedBundleIdentifiers</key>
+	<string>` + bundleID + `</string>
 </dict>
 </plist>
 `)

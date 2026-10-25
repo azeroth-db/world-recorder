@@ -1,18 +1,14 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
-	"maps"
 	"os"
 	"strings"
-	"time"
 )
 
-const (
-	defaultEndpoint = "https://wowdb.wiki/api/contrib/recorder"
-	pollInterval    = 10 * time.Second
-)
+const defaultEndpoint = "https://wowdb.wiki/api/contrib/recorder"
 
 type options struct {
 	wow      string
@@ -64,13 +60,29 @@ func dispatch(command string, opts options) error {
 	if err != nil {
 		return pathless(err)
 	}
+	s.readClients(opts.endpoint)
+	if command == "setup" || command == "install" {
+		root, err := chooseInstall(opts.wow, savedGameFolder())
+		if errors.Is(err, errSelectionCancelled) {
+			return err
+		}
+		if err != nil {
+			if command == "setup" {
+				showDialog(err.Error(), true)
+			}
+			return err
+		}
+		opts = pinGameFolder(opts, root)
+	}
 	switch command {
 	case "setup":
 		return s.setup(opts, true)
 	case "install":
 		return s.setup(opts, false)
 	case "link":
-		return s.link(opts.endpoint)
+		stop, cancel := interrupted()
+		defer cancel()
+		return s.link(stop, opts.endpoint)
 	case "status":
 		return s.status(opts.wow)
 	case "run":
@@ -81,43 +93,24 @@ func dispatch(command string, opts options) error {
 
 func (s *state) run(opts options) error {
 	if opts.once {
-		failed, err := s.pass(opts.wow, opts.endpoint)
-		if err == nil && failed > 0 {
+		results, err := s.pass(opts.wow, opts.endpoint)
+		if failed := notSent(results); err == nil && failed > 0 {
 			err = fmt.Errorf("%d save(s) not sent", failed)
 		}
 		return err
 	}
 	detachConsole()
-	return s.watch(opts)
-}
-
-func (s *state) watch(opts options) error {
-	seen, key := snapshot(findSaves(installs(opts.wow))), s.readKey()
-	// A refused pass is logged and retried on the next change: the login item keeps this process alive.
-	s.pass(opts.wow, opts.endpoint)
-	wasRunning := s.gameRunning()
-	for range time.Tick(pollInterval) {
-		running, current, currentKey := s.gameRunning(), snapshot(findSaves(installs(opts.wow))), s.readKey()
-		if running && !wasRunning || !maps.Equal(current, seen) || currentKey != key {
-			s.pass(opts.wow, opts.endpoint)
-		}
-		wasRunning, seen, key = running, current, currentKey
-	}
-	return nil
-}
-
-func (s *state) gameRunning() bool {
-	running, err := gameRunning()
-	if err != nil {
-		s.log("process list result=failed: %v", err)
-	}
-	return running
+	return s.serve(opts)
 }
 
 func (s *state) status(wow string) error {
 	fmt.Println("install id:", s.install)
 	fmt.Println("linked:", map[bool]string{true: "yes", false: "no"}[s.readKey() != ""])
-	saves := findSaves(installs(wow))
+	found := installs(wow)
+	if len(found) == 0 {
+		fmt.Println("game folder:", folderReason(wow))
+	}
+	saves := findSaves(found)
 	if len(saves) == 0 {
 		fmt.Println("no World Recorder saves found")
 	}
@@ -128,7 +121,7 @@ func (s *state) status(wow string) error {
 }
 
 func (s *state) saveStatus(sv save) string {
-	c, err := convert(sv)
+	c, err := s.convert(sv)
 	switch {
 	case err != nil:
 		return "unreadable: " + err.Error()

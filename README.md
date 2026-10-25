@@ -4,7 +4,9 @@ World Recorder is a WoW Forever addon that records what your client sees while y
 drops, kills, skinning and gathering loot, quest givers and quest text, vendors, trainers,
 flight routes and fishing catches. It also keeps a snapshot of each of your characters.
 A companion uploader sends the saved data to [wowdb.wiki](https://wowdb.wiki), where your
-[profile](https://wowdb.wiki/account) shows your characters and what you recorded.
+[profile](https://wowdb.wiki/account) shows your characters and what you recorded. Without the
+uploader, send the save file yourself from your
+[World Recorder page](https://wowdb.wiki/account/world-recorder).
 
 - Install and downloads: [wowdb.wiki/news/wow-forever-world-recorder](https://wowdb.wiki/news/wow-forever-world-recorder)
 - About the addon: [azeroth-db.github.io/world-recorder.html](https://azeroth-db.github.io/world-recorder.html)
@@ -32,6 +34,15 @@ The game writes addon data when you log out, exit or reload the interface. Type 
 or click the Save button that `/worldrecorder button` shows, to write it without leaving the
 world. `/worldrecorder` prints what has been recorded so far.
 
+## Without the uploader
+
+Install the addon alone into `World of Warcraft/_forever_/Interface/AddOns/`, play, then log
+out or type `/wrsave`. On your [World Recorder page](https://wowdb.wiki/account/world-recorder),
+signed in, choose `WorldRecorder.lua` under Send a save file. It is in
+`World of Warcraft/_forever_/WTF/Account/<your account>/SavedVariables/`. Send it after each
+session and before a game update: the addon starts its records afresh with every new game
+version. The page converts the file in your browser as the uploader does and sends only it.
+
 ## Uploader
 
 The uploader (`uploader/`, Go, standard library only) runs on your computer, watches the
@@ -43,7 +54,7 @@ describes every command, file and request.
 
 ```sh
 ./package.sh            # addon zip in dist/, after check-api.sh
-uploader/build.sh       # macOS app, universal binary and Windows setup in uploader/dist/
+uploader/build.sh       # macOS app, universal binary and Windows setup in uploader/dist/, embedding that zip
 ```
 
 `check-api.sh <path to the client's Interface/AddOns>` refuses an addon that calls a

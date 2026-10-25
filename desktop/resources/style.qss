@@ -1,0 +1,133 @@
+/* The game's dialog: the client's dialog background under a dark wash, its gold heading font, Friz Quadrata text and
+   its red button texture. Colours are the site's tokens (site/app/globals.css). */
+QWidget {
+    font-family: "FrizQuadrataCTT";
+    font-size: 13px;
+    color: #cec6b3;
+}
+QWidget#frame {
+    background-color: #111512;
+    background-image: url(:/ui-dialogbox-background.png);
+}
+QLabel#title {
+    font-family: "Morpheus";
+    font-size: 26px;
+    color: #e2bf75;
+}
+QLabel#label {
+    color: #a69b83;
+}
+QLabel#value {
+    color: #f0ead6;
+}
+QLabel#detail {
+    color: #ff8040;
+    font-size: 12px;
+}
+QLabel#heading {
+    font-family: "Morpheus";
+    font-size: 18px;
+    color: #e2bf75;
+    margin-top: 6px;
+}
+QLabel#error {
+    color: #ff8040;
+}
+QLabel#mark {
+    border-radius: 6px;
+    border: 1px solid #090b0a;
+}
+QLabel#mark[mark="ready"] { background: #40c040; }
+QLabel#mark[mark="waiting"] { background: #ffd100; }
+QLabel#mark[mark="notready"] { background: #ff4040; }
+QLabel[result="accepted"] { color: #40c040; }
+QLabel[result="duplicate"] { color: #a69b83; }
+QLabel[result="failed"] { color: #ff4040; }
+QScrollArea#history, QScrollArea#history > QWidget > QWidget {
+    background: #090b0a;
+}
+QScrollArea#history {
+    border: 1px solid #514a38;
+}
+QScrollBar:vertical {
+    background: #090b0a;
+    width: 10px;
+    margin: 0;
+    border: none;
+}
+QScrollBar::handle:vertical {
+    background: #514a38;
+    min-height: 24px;
+    margin: 2px;
+    border-radius: 3px;
+}
+QScrollBar::handle:vertical:hover {
+    background: #806739;
+}
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0;
+    border: none;
+    background: none;
+}
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+    background: none;
+}
+QPushButton {
+    min-height: 24px;
+    padding: 2px 16px;
+    color: #ffd100;
+    border-image: url(:/button-up.png) 3 3 3 3 stretch;
+    border-width: 3px;
+}
+QPushButton:hover {
+    color: #ffffff;
+    border-image: url(:/button-hover.png) 3 3 3 3 stretch;
+}
+QPushButton:pressed {
+    border-image: url(:/button-down.png) 3 3 3 3 stretch;
+}
+QPushButton:disabled {
+    color: #7f7f7f;
+    border-image: url(:/button-disabled.png) 3 3 3 3 stretch;
+}
+QPushButton[kind="quiet"] {
+    border-image: none;
+    border: none;
+    color: #a69b83;
+    padding: 2px 4px;
+}
+QPushButton[kind="quiet"]:hover {
+    color: #f4d58c;
+}
+QCheckBox {
+    spacing: 6px;
+    color: #f0ead6;
+}
+QCheckBox::indicator {
+    width: 20px;
+    height: 20px;
+    image: url(:/checkbox.png);
+}
+QCheckBox::indicator:hover { image: url(:/checkbox-hover.png); }
+QCheckBox::indicator:checked { image: url(:/checkbox-checked.png); }
+QCheckBox::indicator:checked:hover { image: url(:/checkbox-checked-hover.png); }
+QCheckBox::indicator:checked:disabled { image: url(:/checkbox-checked-disabled.png); }
+QCheckBox:disabled {
+    color: #7f7f7f;
+}
+QToolTip {
+    color: #f0ead6;
+    background: #121921;
+    border: 1px solid #806739;
+}
+QMenu {
+    background: #121921;
+    border: 1px solid #806739;
+}
+QMenu::item {
+    padding: 4px 18px;
+}
+QMenu::item:selected {
+    background: #252c24;
+    color: #ffffff;
+}

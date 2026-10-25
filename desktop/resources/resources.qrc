@@ -1,0 +1,21 @@
+<RCC>
+    <qresource prefix="/">
+        <file>strings.json</file>
+        <file>style.qss</file>
+        <file>friz.ttf</file>
+        <file>morpheus.ttf</file>
+        <file>icon.png</file>
+        <file>tray-mac.png</file>
+        <file>tray-mac@2x.png</file>
+        <file>button-up.png</file>
+        <file>button-down.png</file>
+        <file>button-hover.png</file>
+        <file>button-disabled.png</file>
+        <file>ui-dialogbox-background.png</file>
+        <file>checkbox.png</file>
+        <file>checkbox-checked.png</file>
+        <file>checkbox-hover.png</file>
+        <file>checkbox-checked-hover.png</file>
+        <file>checkbox-checked-disabled.png</file>
+    </qresource>
+</RCC>

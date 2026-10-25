@@ -119,6 +119,14 @@ func (s *state) write(name string, data []byte) error {
 	return os.Rename(temp.Name(), s.path(name))
 }
 
+func (s *state) writeJSON(name string, value any) error {
+	data, err := json.MarshalIndent(value, "", " ")
+	if err != nil {
+		return err
+	}
+	return s.write(name, append(data, '\n'))
+}
+
 func (s *state) readKey() string {
 	data, _ := os.ReadFile(s.path("key"))
 	return strings.TrimSpace(string(data))

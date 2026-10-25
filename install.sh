@@ -1,10 +1,11 @@
 #!/bin/sh
 # Installs the World Recorder addon into the WoW Forever client and the uploader as a login item, then links this Mac to the player's wowdb.wiki account.
 set -eu
-base=https://wowdb.wiki/assets/world-recorder/1.3.0
+base=https://wowdb.wiki/assets/world-recorder/1.7.3
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
-curl -fsSL "$base/wowdb-recorder-darwin" -o "$work/download"
-chmod 755 "$work/download"
-mv "$work/download" "$work/wowdb-recorder"
-if [ -n "${WOW_DIR:-}" ]; then "$work/wowdb-recorder" install --wow "$WOW_DIR"; else "$work/wowdb-recorder" install; fi
+# The program comes from the app the site serves, the same universal binary as double-clicking it runs.
+curl -fsSL "$base/WorldRecorder-mac.zip" -o "$work/WorldRecorder-mac.zip"
+ditto -x -k "$work/WorldRecorder-mac.zip" "$work"
+program="$work/World Recorder.app/Contents/MacOS/wowdb-recorder"
+if [ -n "${WOW_DIR:-}" ]; then "$program" install --wow "$WOW_DIR"; else "$program" install; fi

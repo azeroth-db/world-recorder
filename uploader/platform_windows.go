@@ -3,7 +3,6 @@
 package main
 
 import (
-	"encoding/csv"
 	"errors"
 	"os"
 	"os/exec"
@@ -17,7 +16,6 @@ import (
 )
 
 const (
-	blizzardKey      = `SOFTWARE\WOW6432Node\Blizzard Entertainment\World of Warcraft`
 	runKey           = `Software\Microsoft\Windows\CurrentVersion\Run`
 	runValue         = "WowdbRecorderUploader"
 	createNoWindow   = 0x08000000
@@ -42,24 +40,40 @@ var (
 
 func defaultInstalls() []string {
 	var roots []string
-	for _, candidate := range []string{registryInstall(), `C:\Program Files (x86)\World of Warcraft`} {
+	agent := filepath.Join(os.Getenv("ProgramData"), "Battle.net", "Agent", "product.db")
+	for _, candidate := range append(battleNetInstalls(agent), registryInstalls()...) {
 		if candidate != "" && !slices.Contains(roots, candidate) {
 			roots = append(roots, candidate)
+		}
+	}
+	for _, variable := range []string{"ProgramFiles(x86)", "ProgramW6432", "ProgramFiles"} {
+		if dir := os.Getenv(variable); dir != "" {
+			roots = append(roots, filepath.Join(dir, "World of Warcraft"))
 		}
 	}
 	return roots
 }
 
-func registryInstall() string {
-	path, err := readRegistryString(syscall.HKEY_LOCAL_MACHINE, blizzardKey, "InstallPath")
-	if err != nil || path == "" {
-		return ""
+func registryInstalls() []string {
+	var roots []string
+	for _, hive := range []syscall.Handle{syscall.HKEY_LOCAL_MACHINE, syscall.HKEY_CURRENT_USER} {
+		for _, prefix := range []string{`SOFTWARE\WOW6432Node\Blizzard Entertainment\`, `SOFTWARE\Blizzard Entertainment\`} {
+			for _, product := range []string{"World of Warcraft", "World of Warcraft Beta"} {
+				for _, value := range []string{"InstallPath", "InstallLocation"} {
+					path, err := readRegistryString(hive, prefix+product, value)
+					if err != nil || path == "" {
+						continue
+					}
+					path = filepath.Clean(path)
+					if flavorDir.MatchString(filepath.Base(path)) {
+						path = filepath.Dir(path)
+					}
+					roots = append(roots, path)
+				}
+			}
+		}
 	}
-	path = filepath.Clean(path)
-	if flavorDir.MatchString(filepath.Base(path)) {
-		return filepath.Dir(path)
-	}
-	return path
+	return roots
 }
 
 func utf16(s string) *uint16 {
@@ -81,7 +95,25 @@ func readRegistryString(root syscall.Handle, path, name string) (string, error) 
 	if err := syscall.RegQueryValueEx(key, utf16(name), nil, &kind, (*byte)(unsafe.Pointer(&buffer[0])), &size); err != nil {
 		return "", err
 	}
-	return syscall.UTF16ToString(buffer), nil
+	if kind != syscall.REG_SZ && kind != syscall.REG_EXPAND_SZ {
+		return "", errors.New("registry install path is not a string")
+	}
+	pathValue := syscall.UTF16ToString(buffer)
+	if kind == syscall.REG_EXPAND_SZ {
+		expand := kernel32.NewProc("ExpandEnvironmentStringsW")
+		input := utf16(pathValue)
+		length, _, err := expand.Call(uintptr(unsafe.Pointer(input)), 0, 0)
+		if length == 0 {
+			return "", err
+		}
+		output := make([]uint16, length)
+		written, _, err := expand.Call(uintptr(unsafe.Pointer(input)), uintptr(unsafe.Pointer(&output[0])), length)
+		if written == 0 || written > length {
+			return "", err
+		}
+		pathValue = syscall.UTF16ToString(output)
+	}
+	return pathValue, nil
 }
 
 func withRunKey(action func(syscall.Handle) error) error {
@@ -103,21 +135,6 @@ func errno(code uintptr) error {
 func hidden(cmd *exec.Cmd) *exec.Cmd {
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: createNoWindow}
 	return cmd
-}
-
-func gameRunning() (bool, error) {
-	out, err := hidden(exec.Command("tasklist", "/FO", "CSV", "/NH")).Output()
-	if err != nil {
-		return false, err
-	}
-	rows, err := csv.NewReader(strings.NewReader(string(out))).ReadAll()
-	if err != nil {
-		return false, err
-	}
-	return slices.ContainsFunc(rows, func(row []string) bool {
-		name := strings.ToLower(row[0])
-		return strings.HasPrefix(name, "wow") && strings.HasSuffix(name, ".exe")
-	}), nil
 }
 
 // consoleShared reports whether another process, such as a shell, shares this console.
@@ -160,16 +177,53 @@ func showDialog(text string, failed bool) {
 }
 
 func register(exe string, args []string) error {
-	var quoted []string
-	for _, arg := range append([]string{exe}, args...) {
-		quoted = append(quoted, syscall.EscapeArg(arg))
-	}
-	if err := setRunValue(strings.Join(quoted, " ")); err != nil {
+	if err := setRunValue(runCommand(exe, args)); err != nil {
 		return err
 	}
 	start := exec.Command(exe, args...)
 	start.SysProcAttr = &syscall.SysProcAttr{CreationFlags: detachedProcess | syscall.CREATE_NEW_PROCESS_GROUP}
 	return start.Start()
+}
+
+// setLoginItem writes or removes the Run value; the running program stays.
+func setLoginItem(on bool, exe string, args []string) error {
+	if !on {
+		return unregister()
+	}
+	return setRunValue(runCommand(exe, args))
+}
+
+func runCommand(exe string, args []string) string {
+	var quoted []string
+	for _, arg := range append([]string{exe}, args...) {
+		quoted = append(quoted, syscall.EscapeArg(arg))
+	}
+	return strings.Join(quoted, " ")
+}
+
+// swapProgram renames the running program aside, which Windows allows, moves the new one into its place and
+// returns where the previous one is kept.
+func swapProgram(file, exe string) (string, error) { return swapIn(file, exe) }
+
+// restartProgram starts the new program with the same arguments and ends this one.
+func restartProgram(exe string) error {
+	start := exec.Command(exe, os.Args[1:]...)
+	start.SysProcAttr = &syscall.SysProcAttr{CreationFlags: detachedProcess | syscall.CREATE_NEW_PROCESS_GROUP}
+	if err := start.Start(); err != nil {
+		return err
+	}
+	os.Exit(0)
+	return nil
+}
+
+func loginItemExists() bool {
+	var key syscall.Handle
+	if syscall.RegOpenKeyEx(syscall.HKEY_CURRENT_USER, utf16(runKey), 0, syscall.KEY_READ, &key) != nil {
+		return false
+	}
+	defer syscall.RegCloseKey(key)
+	var size uint32
+	return syscall.RegQueryValueEx(key, utf16(runValue), nil, nil, nil, &size) == nil
 }
 
 func setRunValue(command string) error {
