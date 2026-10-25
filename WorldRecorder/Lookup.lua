@@ -239,7 +239,7 @@ function lookup.WebsiteRoute()
   local record = lookup.selected and lookup.Record(lookup.selected.key)
   local route = record and text(record.route)
   -- The producer owns exact canonical routes. Never derive one from a displayed name or native ID.
-  if route and route:match("^https://wowdb%.wiki/") and not route:find("[\r\n]") then return route end
+  if route and (route:match("^https://azeroth%.wiki/") or route:match("^https://wowdb%.wiki/")) and not route:find("[\r\n]") then return route end
 end
 
 local events = CreateFrame("Frame")

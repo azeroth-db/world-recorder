@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-const defaultEndpoint = "https://wowdb.wiki/api/contrib/recorder"
+const defaultEndpoint = "https://azeroth.wiki/api/contrib/recorder"
 
 type options struct {
 	wow      string

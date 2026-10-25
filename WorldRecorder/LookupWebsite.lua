@@ -6,7 +6,9 @@ local _, ns = ...
 local website = {}
 ns.LookupWebsite = website
 
-local CELL, COLUMNS, ORIGIN = 8, 120, "https://wowdb.wiki"
+local CELL, COLUMNS = 8, 120
+-- The site moves from wowdb.wiki to azeroth.wiki on November 1, 2026; lookup routes may name either.
+local ORIGINS = { "https://azeroth.wiki/", "https://wowdb.wiki/" }
 local strip, cells, pending = nil, {}, false
 local session, sequence = GetServerTime(), 0
 
@@ -72,9 +74,13 @@ end
 
 -- The record's path below the site's origin; the producer owns the canonical route.
 function website.Path(route)
-  if type(route) ~= "string" or route:sub(1, #ORIGIN + 1) ~= ORIGIN .. "/" then return end
-  local path = route:sub(#ORIGIN + 1)
-  if #path < 65536 and not path:find("[%c\\]") then return path end
+  if type(route) ~= "string" then return end
+  for _, origin in ipairs(ORIGINS) do
+    if route:sub(1, #origin) == origin then
+      local path = route:sub(#origin)
+      if #path < 65536 and not path:find("[%c\\]") then return path end
+    end
+  end
 end
 
 function website.Open(route)

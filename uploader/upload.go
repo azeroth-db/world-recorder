@@ -42,7 +42,7 @@ type savePayload struct {
 	Data   json.RawMessage `json:"data"`
 }
 
-var errBanned = errors.New("the server refuses records from this wowdb.wiki account (status 403); sending stopped")
+var errBanned = errors.New("the server refuses records from this Azeroth DB account (status 403); sending stopped")
 
 type statusError int
 
@@ -219,7 +219,7 @@ func (s *state) pass(wow, endpoint string) ([]saveResult, error) {
 		}
 	}
 	if counts["unlinked"] > 0 {
-		s.log("not linked: run setup or link to link this computer to a wowdb.wiki account")
+		s.log("not linked: run setup or link to link this computer to an Azeroth DB account")
 	}
 	s.log("pass saves=%d sent=%d failed=%d unlinked=%d", len(saves), counts["uploaded"], len(saves)-counts["sent"]-counts["unlinked"], counts["unlinked"])
 	return results, banned
@@ -257,7 +257,7 @@ func (s *state) sendSave(c converted, key *string, endpoint string) (saveResult,
 		r.state = "refused"
 		return r, errBanned
 	case errors.Is(err, statusError(http.StatusUnauthorized)):
-		s.log("key result=rejected: this computer must be linked to a wowdb.wiki account again")
+		s.log("key result=rejected: this computer must be linked to an Azeroth DB account again")
 		s.dropKey(*key)
 		*key = ""
 		r.state = "unlinked"

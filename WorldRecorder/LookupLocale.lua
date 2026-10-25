@@ -15,7 +15,7 @@ local L
 if locale == "deDE" then
   L = {
     title = "World Recorder",
-    program = "World Recorder: Das Programm World Recorder sendet deine Aufzeichnungen nach jedem Ausloggen an wowdb.wiki und hält dieses Addon aktuell. Download: wowdb.wiki/de/forever/anleitungen/world-recorder-addon",
+    program = "World Recorder: Das Programm World Recorder sendet deine Aufzeichnungen nach jedem Ausloggen an azeroth.wiki und hält dieses Addon aktuell. Download: azeroth.wiki/de/forever/anleitungen/world-recorder-addon",
     search = "Suchen",
     all = "Alle",
     items = "Gegenstände",
@@ -94,7 +94,7 @@ if locale == "deDE" then
 elseif locale == "esES" then
   L = {
     title = "World Recorder",
-    program = "World Recorder: el programa World Recorder envía tus registros a wowdb.wiki cada vez que cierras sesión y mantiene este addon actualizado. Descárgalo en wowdb.wiki/es/forever/guias/addon-world-recorder",
+    program = "World Recorder: el programa World Recorder envía tus registros a azeroth.wiki cada vez que cierras sesión y mantiene este addon actualizado. Descárgalo en azeroth.wiki/es/forever/guias/addon-world-recorder",
     search = "Buscar",
     all = "Todos",
     items = "Objetos",
@@ -173,7 +173,7 @@ elseif locale == "esES" then
 elseif locale == "esMX" then
   L = {
     title = "World Recorder",
-    program = "World Recorder: el programa World Recorder envía tus registros a wowdb.wiki cada vez que cierras sesión y mantiene este addon actualizado. Descárgalo en wowdb.wiki/es-MX/forever/guias/addon-world-recorder",
+    program = "World Recorder: el programa World Recorder envía tus registros a azeroth.wiki cada vez que cierras sesión y mantiene este addon actualizado. Descárgalo en azeroth.wiki/es-MX/forever/guias/addon-world-recorder",
     search = "Buscar",
     all = "Todos",
     items = "Objetos",
@@ -252,7 +252,7 @@ elseif locale == "esMX" then
 elseif locale == "frFR" then
   L = {
     title = "World Recorder",
-    program = "World Recorder : le programme World Recorder envoie vos enregistrements à wowdb.wiki à chaque déconnexion et tient cet addon à jour. Téléchargez-le sur wowdb.wiki/fr/forever/guides/add-on-world-recorder",
+    program = "World Recorder : le programme World Recorder envoie vos enregistrements à azeroth.wiki à chaque déconnexion et tient cet addon à jour. Téléchargez-le sur azeroth.wiki/fr/forever/guides/add-on-world-recorder",
     search = "Recherche",
     all = "Tous",
     items = "Objets",
@@ -331,7 +331,7 @@ elseif locale == "frFR" then
 elseif locale == "ptBR" then
   L = {
     title = "World Recorder",
-    program = "World Recorder: o programa World Recorder envia seus registros ao wowdb.wiki sempre que você sai do jogo e mantém este addon atualizado. Baixe em wowdb.wiki/pt-BR/forever/guias/addon-world-recorder",
+    program = "World Recorder: o programa World Recorder envia seus registros ao azeroth.wiki sempre que você sai do jogo e mantém este addon atualizado. Baixe em azeroth.wiki/pt-BR/forever/guias/addon-world-recorder",
     search = "Buscar",
     all = "Todos",
     items = "Itens",
@@ -410,7 +410,7 @@ elseif locale == "ptBR" then
 elseif locale == "ruRU" then
   L = {
     title = "World Recorder",
-    program = "World Recorder: программа World Recorder отправляет ваши записи на wowdb.wiki после каждого выхода из игры и обновляет этот аддон. Скачать: wowdb.wiki/ru/forever/руководства/аддон-world-recorder",
+    program = "World Recorder: программа World Recorder отправляет ваши записи на azeroth.wiki после каждого выхода из игры и обновляет этот аддон. Скачать: azeroth.wiki/ru/forever/руководства/аддон-world-recorder",
     search = "Поиск",
     all = "Все",
     items = "Предметы",
@@ -489,7 +489,7 @@ elseif locale == "ruRU" then
 elseif locale == "koKR" then
   L = {
     title = "World Recorder",
-    program = "World Recorder: World Recorder 프로그램은 접속을 종료할 때마다 기록을 wowdb.wiki로 보내고 이 애드온을 최신 상태로 유지합니다. 받기: wowdb.wiki/ko/forever/가이드/world-recorder-애드온",
+    program = "World Recorder: World Recorder 프로그램은 접속을 종료할 때마다 기록을 azeroth.wiki로 보내고 이 애드온을 최신 상태로 유지합니다. 받기: azeroth.wiki/ko/forever/가이드/world-recorder-애드온",
     search = "검색",
     all = "전체",
     items = "아이템",
@@ -568,7 +568,7 @@ elseif locale == "koKR" then
 elseif locale == "zhCN" then
   L = {
     title = "World Recorder",
-    program = "World Recorder：World Recorder 程序会在每次登出后把你的记录发送到 wowdb.wiki，并让此插件保持最新。下载：wowdb.wiki/zh-CN/forever/指南/world-recorder-插件",
+    program = "World Recorder：World Recorder 程序会在每次登出后把你的记录发送到 azeroth.wiki，并让此插件保持最新。下载：azeroth.wiki/zh-CN/forever/指南/world-recorder-插件",
     search = "搜索",
     all = "全部",
     items = "物品",
@@ -647,7 +647,7 @@ elseif locale == "zhCN" then
 elseif locale == "zhTW" then
   L = {
     title = "World Recorder",
-    program = "World Recorder：World Recorder 程式會在每次登出後把你的紀錄傳送到 wowdb.wiki，並讓此插件保持最新。下載：wowdb.wiki/zh-TW/forever/指南/world-recorder-插件",
+    program = "World Recorder：World Recorder 程式會在每次登出後把你的紀錄傳送到 azeroth.wiki，並讓此插件保持最新。下載：azeroth.wiki/zh-TW/forever/指南/world-recorder-插件",
     search = "搜尋",
     all = "全部",
     items = "物品",
@@ -728,7 +728,7 @@ else
   locale = "enUS"
   L = {
     title = "World Recorder",
-    program = "World Recorder: the World Recorder program sends your records to wowdb.wiki after every logout and keeps this addon up to date. Download it at wowdb.wiki/forever/guides/world-recorder",
+    program = "World Recorder: the World Recorder program sends your records to azeroth.wiki after every logout and keeps this addon up to date. Download it at azeroth.wiki/forever/guides/world-recorder",
     search = "Search",
     all = "All",
     items = "Items",

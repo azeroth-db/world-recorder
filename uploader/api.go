@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"mime"
 	"net/http"
+	"slices"
 	"strconv"
 )
 
@@ -31,6 +32,10 @@ func (d *daemon) routes() http.Handler {
 	return d.guard(mux)
 }
 
+// siteOrigins serve the World Recorder page: the site moves from wowdb.wiki to azeroth.wiki on November 1, 2026, and
+// a page open on either talks to this program.
+var siteOrigins = []string{"https://azeroth.wiki", "https://wowdb.wiki"}
+
 // guard admits only requests to the loopback address from the site's origin or the desktop app, whose commands carry
 // the control token; status and events also answer a terminal.
 func (d *daemon) guard(next http.Handler) http.Handler {
@@ -43,7 +48,7 @@ func (d *daemon) guard(next http.Handler) http.Handler {
 		origin := r.Header.Get("Origin")
 		terminal := origin == "" && r.Method == http.MethodGet && (r.URL.Path == "/v1/status" || r.URL.Path == "/v1/events")
 		desktop := origin == "" && d.controlled(r.Header.Get("X-Recorder-Control"))
-		if origin != d.origin && !terminal && !desktop {
+		if origin != d.origin && !slices.Contains(siteOrigins, origin) && !terminal && !desktop {
 			http.Error(w, "forbidden", http.StatusForbidden)
 			return
 		}

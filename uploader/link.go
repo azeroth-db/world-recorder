@@ -113,7 +113,7 @@ func (s *state) awaitGrant(stop context.Context, listener net.Listener, base, ve
 			return err
 		}
 		s.log("link result=linked")
-		fmt.Println("This computer is linked to your wowdb.wiki account.")
+		fmt.Println("This computer is linked to your Azeroth DB account.")
 		return nil
 	case <-time.After(time.Until(deadline)):
 		s.log("link result=expired")
@@ -142,7 +142,7 @@ func (s *state) keyAccepted(endpoint string) bool {
 	}
 	response.Body.Close()
 	if response.StatusCode == http.StatusUnauthorized {
-		s.log("key result=rejected: this computer must be linked to a wowdb.wiki account again")
+		s.log("key result=rejected: this computer must be linked to an Azeroth DB account again")
 		s.dropKey(key)
 		return false
 	}

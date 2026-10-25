@@ -1,9 +1,9 @@
 ## Interface: 16001
 ## Title: World Recorder
-## Notes: Records quest givers, drops and drop rates, vendors, trainers, flight paths, auction house prices, where creatures and gathering nodes are, and each character's achievements, statistics, titles, mounts and Character Info values, for wowdb.wiki.
+## Notes: Records quest givers, drops and drop rates, vendors, trainers, flight paths, auction house prices, where creatures and gathering nodes are, and each character's achievements, statistics, titles, mounts and Character Info values, for azeroth.wiki.
 ## Author: Azeroth DB
-## Version: 1.7.5
-## X-Website: https://wowdb.wiki
+## Version: 1.7.6
+## X-Website: https://azeroth.wiki
 ## SavedVariables: WorldRecorderDB, WorldRecorderUI, WorldRecorderCharacters, WorldRecorderInstall, WorldRecorderSeal
 
 Seal.lua

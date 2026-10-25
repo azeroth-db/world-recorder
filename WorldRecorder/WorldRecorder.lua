@@ -6,7 +6,7 @@
 local ADDON, ns = ...
 -- The version of this code, kept in the save: the client runs the files it loaded until the next reload, whatever
 -- the folder holds by then. publish.sh checks it against the TOC.
-local VERSION = "1.7.5"
+local VERSION = "1.7.6"
 local frame = CreateFrame("Frame")
 local counted, killed, casts = {}, {}, {}
 local lastCast, lastCastAt
@@ -1149,7 +1149,7 @@ local function unitEvent(unit)
   died(unit)
 end
 
--- The save's own id, made once and kept: wowdb.wiki files a save under it however the save reaches the site, so a save
+-- The save's own id, made once and kept: the site files a save under it however the save reaches the site, so a save
 -- sent by the program and from the browser counts once.
 local function install()
   if type(WorldRecorderInstall) == "string" and #WorldRecorderInstall == 32 and WorldRecorderInstall:match("^[0-9a-f]+$") then return end

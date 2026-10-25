@@ -26,7 +26,7 @@ func (a addonArchive) Close() error { return a.file.Close() }
 
 // addonPackage is the addon this program installs: the archive of the signed release.json, kept in the configuration
 // folder as addon.zip beside that release.json as addon.json. The kept archive serves while its release is not older
-// than the program; otherwise the release wowdb.wiki serves now is downloaded and kept.
+// than the program; otherwise the release the site serves now is downloaded and kept.
 func (s *state) addonPackage(endpoint string) (addonArchive, error) {
 	if kept, err := s.keptAddon(); err == nil {
 		return kept, nil
@@ -37,10 +37,10 @@ func (s *state) addonPackage(endpoint string) (addonArchive, error) {
 	}
 	r, err := fetchRelease(origin)
 	if err != nil {
-		return addonArchive{}, fmt.Errorf("The World Recorder addon could not be downloaded from wowdb.wiki: %v.", err)
+		return addonArchive{}, fmt.Errorf("The World Recorder addon could not be downloaded from Azeroth DB: %v.", err)
 	}
 	if newer(programVersion, r.Version) {
-		return addonArchive{}, fmt.Errorf("wowdb.wiki serves the World Recorder addon %s, older than this program's %s.", r.Version, programVersion)
+		return addonArchive{}, fmt.Errorf("Azeroth DB serves the World Recorder addon %s, older than this program's %s.", r.Version, programVersion)
 	}
 	archive, err := s.download(origin, r.Addon)
 	if err == nil {
@@ -51,7 +51,7 @@ func (s *state) addonPackage(endpoint string) (addonArchive, error) {
 	}
 	if err != nil {
 		os.Remove(archive)
-		return addonArchive{}, fmt.Errorf("The World Recorder addon could not be downloaded from wowdb.wiki: %v.", pathless(err))
+		return addonArchive{}, fmt.Errorf("The World Recorder addon could not be downloaded from Azeroth DB: %v.", pathless(err))
 	}
 	return s.keptAddon()
 }
@@ -132,16 +132,16 @@ func (s *state) installAll(opts options) ([]string, string, error) {
 	if err != nil {
 		return report, "", fmt.Errorf("The uploader could not be installed: %v", pathless(err))
 	}
-	report = append(report, "The uploader starts at login and sends your records to wowdb.wiki.")
+	report = append(report, "The uploader starts at login and sends your records to Azeroth DB.")
 	if s.readKey() != "" {
-		return append(report, "This computer is linked to your wowdb.wiki account."), exe, nil
+		return append(report, "This computer is linked to your Azeroth DB account."), exe, nil
 	}
 	stop, cancel := interrupted()
 	defer cancel()
 	if err := s.link(stop, opts.endpoint); err != nil {
-		return report, exe, fmt.Errorf("This computer is not linked to a wowdb.wiki account yet (%v). Open World Recorder again to link it.", err)
+		return report, exe, fmt.Errorf("This computer is not linked to an Azeroth DB account yet (%v). Open World Recorder again to link it.", err)
 	}
-	report = append(report, "This computer is now linked to your wowdb.wiki account.")
+	report = append(report, "This computer is now linked to your Azeroth DB account.")
 	// Send at once, so the account page that confirmed the link shows the records while it is open.
 	if _, err := s.pass(opts.wow, opts.endpoint); err != nil {
 		return report, exe, err

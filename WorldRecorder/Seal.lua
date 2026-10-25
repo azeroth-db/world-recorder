@@ -1,4 +1,4 @@
--- A checksum of what World Recorder saves, written at logout as WorldRecorderSeal; wowdb.wiki refuses a save whose
+-- A checksum of what World Recorder saves, written at logout as WorldRecorderSeal; the site refuses a save whose
 -- records no longer give it (site/lib/contrib/seal.ts computes the same sum). A save that no longer matches its seal when
 -- the game loads it was edited outside the game: it keeps the seal "edited" from then on, so playing on does not seal the
 -- edit again. The code is public, so this stops edits by hand, not a forger.

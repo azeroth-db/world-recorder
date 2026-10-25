@@ -9,7 +9,7 @@ import (
 )
 
 // originLimit is how long Cloudflare waits for an origin before it answers 524 (100 seconds, its documented
-// limit); wowdb.wiki cannot answer later than that, so a longer silence is a dead connection.
+// limit); the site cannot answer later than that, so a longer silence is a dead connection.
 const originLimit = 100 * time.Second
 
 var client = &http.Client{Transport: transport()}

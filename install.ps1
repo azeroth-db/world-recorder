@@ -1,7 +1,7 @@
-# Installs the World Recorder addon into the WoW Forever client and the uploader as a login item, then links this computer to the player's wowdb.wiki account (Windows).
+# Installs the World Recorder addon into the WoW Forever client and the uploader as a login item, then links this computer to the player's Azeroth DB account (Windows).
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
-$base = 'https://wowdb.wiki/assets/world-recorder/1.7.5'
+$base = 'https://azeroth.wiki/assets/world-recorder/1.7.6'
 $work = Join-Path ([IO.Path]::GetTempPath()) ([IO.Path]::GetRandomFileName())
 New-Item -ItemType Directory $work | Out-Null
 try {

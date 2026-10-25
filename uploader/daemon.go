@@ -108,7 +108,7 @@ func (d *daemon) exitOnSignal() {
 	os.Exit(0)
 }
 
-// contractCheck is how often the program asks wowdb.wiki which clients it reads and whether a release is out while the
+// contractCheck is how often the program asks the site which clients it reads and whether a release is out while the
 // game writes nothing (owner-set), so a client the contract adds, such as WoW Forever's launch client, gets the addon
 // and a release installs without a game session.
 const contractCheck = 15 * time.Minute
