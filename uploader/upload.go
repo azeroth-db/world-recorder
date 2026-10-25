@@ -199,7 +199,7 @@ func (s *state) pass(wow, endpoint string) ([]saveResult, error) {
 		s.log("game folder result=refused: %v", err)
 		return nil, err
 	}
-	s.refreshAddons(found)
+	s.refreshAddons(endpoint, found)
 	s.readCombatLogs(found)
 	saves := findSaves(found)
 	results := make([]saveResult, 0, len(saves))

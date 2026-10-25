@@ -211,6 +211,10 @@ local function renderResults()
       row.icon = row:CreateTexture(nil, "ARTWORK")
       row.icon:SetSize(26, 26)
       row.icon:SetPoint("LEFT", 6, 0)
+      row.summary = label(row, "")
+      row.summary:SetPoint("BOTTOMLEFT", 40, 2)
+      row.summary:SetPoint("BOTTOMRIGHT", -8, 2)
+      row.summary:SetWordWrap(false)
       row:SetScript("OnEnter", function(self) if self.record then tooltip(self, self.record) end end)
       row:SetScript("OnLeave", function() GameTooltip:Hide() end)
       resultRows[index] = row
@@ -224,9 +228,22 @@ local function renderResults()
       row:SetSize(content:GetWidth(), ROW_HEIGHT - 2)
       local published = lookup.Record(record.key)
       row:SetText(named(record.name) or published and named(published.name) or L.missingName)
-      row:GetFontString():SetPoint("LEFT", row, "LEFT", 40, 0)
-      row:GetFontString():SetPoint("RIGHT", row, "RIGHT", -8, 0)
-      row:GetFontString():SetJustifyH("LEFT")
+      local title = row:GetFontString()
+      title:ClearAllPoints()
+      title:SetPoint("LEFT", row, "LEFT", 40, 0)
+      title:SetPoint("RIGHT", row, "RIGHT", -8, 0)
+      title:SetJustifyH("LEFT")
+      local summary = published and named(published.objectiveSummary)
+      row.summary:SetText(summary or "")
+      -- Preserve density and readable fonts. Large font overrides keep the original
+      -- title-only row; the tooltip always retains the full objective.
+      local showSummary = summary and title:GetStringHeight() + row.summary:GetStringHeight() + 6 <= row:GetHeight()
+      row.summary:SetShown(showSummary and true or false)
+      if showSummary then
+        title:ClearAllPoints()
+        title:SetPoint("TOPLEFT", row, "TOPLEFT", 40, -2)
+        title:SetPoint("TOPRIGHT", row, "TOPRIGHT", -8, -2)
+      end
       -- A quest has no item icon; the client's quest mark tells it from an item of the same name.
       row.icon:SetTexture(published and published.icon or (published or record).kind == "quest" and "Interface\\GossipFrame\\AvailableQuestIcon" or nil)
       if position == resultChoice then row:LockHighlight() else row:UnlockHighlight() end

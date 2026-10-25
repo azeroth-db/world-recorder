@@ -223,7 +223,17 @@ function lookup.CancelPending()
   lookup.pending = nil
 end
 function lookup.Refresh()
-  if lookup.selected then lookup.Select(lookup.selected, false) else notify() end
+  if lookup.selected then
+    -- Reopening refreshes native facts without selecting again: selection would
+    -- reset the detail scroll and discard the player's current return position.
+    lookup.generation = lookup.generation + 1
+    lookup.pending = nil
+    if lookup.selected.kind == "item" or lookup.selected.kind == "quest" then
+      request()
+      return
+    end
+  end
+  notify()
 end
 function lookup.WebsiteRoute()
   local record = lookup.selected and lookup.Record(lookup.selected.key)

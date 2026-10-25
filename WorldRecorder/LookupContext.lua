@@ -12,13 +12,15 @@ local function tooltipContext(tooltip)
   local ok, _, link = pcall(tooltip.GetItem, tooltip)
   if ok then return keep(link) end
 end
-local function questContext()
-  local id = GetQuestID and plain(GetQuestID())
-  if type(id) == "number" and id > 0 then keep("quest:" .. id) end
+local function questContext(readID)
+  if type(readID) ~= "function" then return end
+  local ok, id = pcall(readID)
+  id = ok and plain(id)
+  if type(id) == "number" and id > 0 then return keep("quest:" .. id) end
 end
 local frame = CreateFrame("Frame")
 for _, event in ipairs({ "QUEST_DETAIL", "QUEST_PROGRESS", "QUEST_COMPLETE" }) do frame:RegisterEvent(event) end
-frame:SetScript("OnEvent", questContext)
+frame:SetScript("OnEvent", function() questContext(GetQuestID) end)
 
 if hooksecurefunc then
   if type(SetItemRef) == "function" then hooksecurefunc("SetItemRef", keep) end
@@ -34,16 +36,16 @@ function lookup.CaptureContext()
     local current = tooltipContext(GameTooltip)
     if current then return current end
   end
-  if QuestFrame and QuestFrame:IsShown() then questContext(); return lookup.context end
+  if QuestFrame and QuestFrame:IsShown() then return questContext(GetQuestID) end
   if ItemRefTooltip and ItemRefTooltip:IsShown() then
     local current = tooltipContext(ItemRefTooltip)
     if current then return current end
   end
   -- A selected quest is read only on explicit player intent, not while opening the lookup.
-  if ((QuestMapFrame and QuestMapFrame:IsShown()) or not lookup.context) and C_QuestLog and C_QuestLog.GetSelectedQuest then
-    local ok, id = pcall(C_QuestLog.GetSelectedQuest)
-    id = ok and plain(id)
-    if type(id) == "number" and id > 0 then keep("quest:" .. id) end
+  if (QuestMapFrame and QuestMapFrame:IsShown()) or not lookup.context then
+    -- A visible quest surface with an unavailable identity must not inspect an
+    -- unrelated item/quest left in the remembered context.
+    return questContext(C_QuestLog and C_QuestLog.GetSelectedQuest)
   end
   return lookup.context
 end

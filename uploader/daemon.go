@@ -198,7 +198,7 @@ func (d *daemon) wakeUp() {
 	d.openLookups()
 	if d.due.Swap(false) {
 		d.s.readClients(d.opts.endpoint)
-		d.s.refreshAddons(installs(d.gameFolder()))
+		d.s.refreshAddons(d.opts.endpoint, installs(d.gameFolder()))
 	}
 	forced := d.force.Swap(false)
 	now := d.current()

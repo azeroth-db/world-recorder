@@ -8,10 +8,8 @@ version=$(sed -n 's/^## Version: //p' ../WorldRecorder/WorldRecorder.toc)
 qt=$(cd ../../.. && pwd)/.work/qt
 QT_MAC=${QT_MAC:-$qt/mac}
 QT_WIN=${QT_WIN:-$qt/win}
-rm -rf dist addon.zip control ../desktop/build
+rm -rf dist control ../desktop/build
 mkdir -p dist control
-# The program installs the same complete addon the site publishes: package.sh's validated archive.
-cp "../dist/WorldRecorder-$version.zip" addon.zip || { echo "Run ../package.sh first: ../dist/WorldRecorder-$version.zip is missing" >&2; exit 1; }
 python3 ../desktop/strings.py
 desktop() {
   out=../desktop/build/$1
@@ -29,8 +27,9 @@ codesign --force -s - "control/World Recorder"
 for arch in arm64 x86_64; do
   lipo -thin $arch -output "control/World Recorder-$arch" "control/World Recorder"
 done
+# The program carries the addon's version and installs the addon zip of the signed release.json.
 # GOLDFLAGS lets a test build serve another port under another login item (-X main.apiAddress=..., main.agentLabel=...).
-build() { CGO_ENABLED=0 GOOS=$1 GOARCH=$2 go build -trimpath -buildvcs=false -ldflags "${GOLDFLAGS:-}" -o "$3" .; }
+build() { CGO_ENABLED=0 GOOS=$1 GOARCH=$2 go build -trimpath -buildvcs=false -ldflags "-X main.programVersion=$version ${GOLDFLAGS:-}" -o "$3" .; }
 build darwin arm64 dist/darwin-arm64
 build darwin amd64 dist/darwin-amd64
 build windows amd64 dist/WorldRecorderSetup.exe

@@ -85,7 +85,8 @@ a newer version and automatic updates are on, the uploader updates itself (see
 1. It copies the uploader into its configuration folder (see [Files](#files)). On macOS,
    when it runs from `World Recorder.app`, it copies the whole app. It writes the copy
    next to the old one and renames it into place, so a running uploader keeps its file.
-2. It installs the World Recorder addon, which is built into the binary, into
+2. It installs the World Recorder addon of the signed `release.json` (see
+   [Addon package](#addon-package)) into
    `<validated install>/<client folder>/Interface/AddOns/WorldRecorder`, its TOC's `## Interface:`
    line set to the contract's interface numbers for that client. A pass, and the check every 15 minutes, installs it again when the
    installed TOC differs from that, as after a game update, unless the player removed it, and installs
@@ -106,6 +107,27 @@ a newer version and automatic updates are on, the uploader updates itself (see
    the browser; an already linked computer opens the installed program's
    [World Recorder window](../desktop/README.mdx), or that page when the window cannot start.
    Only a failure shows a dialog.
+
+Setup needs the network: it downloads the addon from wowdb.wiki, and linking needs the site too.
+
+### Addon package
+
+The program carries no addon. It installs the archive that the `addon` entry of the signed
+[`release.json`](#updates) names, the same `WorldRecorder.zip` players download to install by hand:
+
+1. When the configuration folder holds no usable copy, the program reads
+   `<site>/assets/world-recorder/release.json` and refuses it unless it carries the release
+   signature. It refuses a release older than the program.
+2. It downloads the archive from the site's own origin and checks its SHA-256 against the
+   signed `addon.sha256`. An archive that does not match is deleted and nothing is installed.
+3. It keeps the archive as `addon.zip` and that `release.json` as `addon.json` (see
+   [Files](#files)).
+4. Before every install it checks the kept pair again: the signature of `addon.json`, its
+   version against the program's, and the SHA-256 of `addon.zip` as opened. A pair that fails
+   is downloaded again. Only the checked file is unpacked.
+
+The kept copy serves the installs a pass and the 15-minute check make, so a new client folder
+or an interface change needs no network once the addon was downloaded.
 
 A double-click starts `setup`: the program starts with no arguments and without a
 terminal. Players download `WorldRecorder-mac.zip`, unpack it and open
@@ -200,7 +222,7 @@ answer carries `Vary: Origin`.
 | `POST /v1/send` | Makes a pass now, also while paused. Answers 202. |
 | `POST /v1/settings` | Stores `paused` and `autoUpdate` in `settings.json`. `startAtLogin` writes or removes the login item without stopping the running uploader; the status field reports whether the login item exists. |
 | `POST /v1/folder` | Opens the folder picker at the current folder, validates the choice as setup does, saves it in `game-folder` and in the login item. Answers 409 when the player cancels. |
-| `POST /v1/addon` | Installs the addon built into the program into the chosen game folder. |
+| `POST /v1/addon` | Installs the [addon package](#addon-package) into the chosen game folder. |
 | `POST /v1/update` | Updates now when `release.json` names a newer version. Answers 202. |
 | `POST /v1/link` | Starts the browser link flow (see [Link to an account](#link-to-an-account)). Answers 202; a new key sends at once unless sending is paused. |
 | `POST /v1/uninstall` | Answers 202, removes the login item, then exits. |
@@ -251,9 +273,9 @@ another signature or changes any signed field: it logs `release result=failed` w
 version it refused, and offers and installs nothing. Programs 1.6.19 and older ignore
 `signature` and read the same file.
 
-`addon` serves players who install the addon by hand; an updated program installs the addon
-built into it. The program's version is the TOC version of the addon built into it. An update runs on the
-worker, so never while a send is in flight:
+`addon` is the archive the program installs ([Addon package](#addon-package)) and players who
+install the addon by hand download. The program's version is the addon's TOC version, which
+`build.sh` sets at build time. An update runs on the worker, so never while a send is in flight:
 
 1. It downloads the program file for this system from the site's own origin into the
    configuration folder and checks its SHA-256. A file that does not match is deleted and the
@@ -270,8 +292,8 @@ worker, so never while a send is in flight:
    another way runs the new file in its own place. On Windows it starts the new program with
    the same arguments and exits. When the restart fails, the `.old` copy is put back and the
    running program serves the port again.
-5. The new program, once it serves the port, installs the addon built into it when the
-   installed addon has another version, deletes the `.old` copy and then `update.json`, and
+5. The new program, once it serves the port, installs the [addon package](#addon-package)
+   when the installed addon has another version, deletes the `.old` copy and then `update.json`, and
    starts its [desktop app](../desktop/README.mdx) in the tray. It
    logs when its version is not the one `update.json` names. On Windows the previous program
    can still be exiting; then the `.old` copy stays and the next start deletes it.
@@ -340,6 +362,8 @@ The uploader keeps its files in `wowdb-recorder` in the user configuration folde
 | File | Content |
 |---|---|
 | `install-id` | The install id. |
+| `addon.zip` | The [addon package](#addon-package), downloaded from the site. |
+| `addon.json` | The signed `release.json` that `addon.zip` came from; its `addon.sha256` is checked before every install. |
 | `game-folder` | The validated Battle.net root selected during setup; a local path, never uploaded. |
 | `clients.json` | The last valid [client contract](#client-contract) read from the site. |
 | `clients-seen.json` | The client folders the program has seen; the first sight of a folder installs the addon there. Written without installing on its first run, so an addon removed before it existed stays removed. |
@@ -385,10 +409,10 @@ Go 1.26 or later, standard library only, on macOS (the script uses `lipo`, `code
 tools/world-recorder/uploader/build.sh
 ```
 
-It copies `../WorldRecorder` to `addon/`, which the binary embeds, builds the desktop app into
-`control/` (the universal macOS app, signed ad hoc, and each of its slices, which the macOS
+It builds the desktop app into `control/` (the universal macOS app, signed ad hoc, and each of its slices, which the macOS
 program of that architecture embeds; the Windows app, which the Windows program embeds) and
-builds with `CGO_ENABLED=0`, `-trimpath` and `-buildvcs=false`. `GOLDFLAGS` passes linker flags
+builds with `CGO_ENABLED=0`, `-trimpath`, `-buildvcs=false` and
+`-X main.programVersion=<the addon's TOC version>`. `GOLDFLAGS` passes linker flags
 to `go build`; a test build serves another port under another login item with
 `GOLDFLAGS="-X main.apiAddress=127.0.0.1:<port> -X main.agentLabel=<label>"`. It writes to `dist/`:
 
@@ -399,5 +423,5 @@ to `go build`; a test build serves another port under another login item with
 | `WorldRecorder-mac.zip` | The app, zipped with `ditto`. |
 | `WorldRecorderSetup.exe` | The Windows binary for x86-64. |
 
-`dist/`, `addon/` and `control/` are not tracked. A plain `go build` needs `addon/` and
-`control/` from a previous `build.sh` run.
+`dist/` and `control/` are not tracked. A plain `go build` needs `control/` from a previous
+`build.sh` run and carries no version.

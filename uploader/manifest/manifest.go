@@ -11,8 +11,8 @@ type Asset struct {
 	SHA256 string `json:"sha256"`
 }
 
-// Release is release.json. Its addon archive is for players who install by hand; an updated program installs
-// the addon built into it.
+// Release is release.json. Its addon archive is what the program installs, and what players who install by hand
+// download.
 type Release struct {
 	Version   string `json:"version"`
 	Darwin    Asset  `json:"darwin"`

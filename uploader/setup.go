@@ -3,10 +3,12 @@ package main
 import (
 	"archive/zip"
 	"bytes"
-	_ "embed"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -14,20 +16,78 @@ import (
 	"strings"
 )
 
-// addon.zip is the complete addon package.sh validates and publishes beside the program (its lookup data and its
-// language-gated TOC included); build.sh copies it here, since go:embed cannot reach a parent directory.
-//
-//go:embed addon.zip
-var addonZip []byte
+// addonArchive is the addon package the signed release.json names, read from the file whose SHA-256 was checked.
+type addonArchive struct {
+	*zip.Reader
+	file *os.File
+}
 
-// addonFiles reads the embedded package as the folder tree it unpacks to.
-var addonFiles = func() fs.FS {
-	files, err := zip.NewReader(bytes.NewReader(addonZip), int64(len(addonZip)))
-	if err != nil {
-		panic("the embedded addon is not a zip: " + err.Error())
+func (a addonArchive) Close() error { return a.file.Close() }
+
+// addonPackage is the addon this program installs: the archive of the signed release.json, kept in the configuration
+// folder as addon.zip beside that release.json as addon.json. The kept archive serves while its release is not older
+// than the program; otherwise the release wowdb.wiki serves now is downloaded and kept.
+func (s *state) addonPackage(endpoint string) (addonArchive, error) {
+	if kept, err := s.keptAddon(); err == nil {
+		return kept, nil
 	}
-	return files
-}()
+	origin, err := siteBase(endpoint)
+	if err != nil {
+		return addonArchive{}, err
+	}
+	r, err := fetchRelease(origin)
+	if err != nil {
+		return addonArchive{}, fmt.Errorf("The World Recorder addon could not be downloaded from wowdb.wiki: %v.", err)
+	}
+	if newer(programVersion, r.Version) {
+		return addonArchive{}, fmt.Errorf("wowdb.wiki serves the World Recorder addon %s, older than this program's %s.", r.Version, programVersion)
+	}
+	archive, err := s.download(origin, r.Addon)
+	if err == nil {
+		err = os.Rename(archive, s.path(addonFile))
+	}
+	if err == nil {
+		err = s.writeJSON(addonReleaseFile, r)
+	}
+	if err != nil {
+		os.Remove(archive)
+		return addonArchive{}, fmt.Errorf("The World Recorder addon could not be downloaded from wowdb.wiki: %v.", pathless(err))
+	}
+	return s.keptAddon()
+}
+
+const (
+	addonFile        = "addon.zip"
+	addonReleaseFile = "addon.json"
+)
+
+// keptAddon opens the kept archive only when its release carries the release key's signature, is not older than the
+// program and names the SHA-256 of the file as opened.
+func (s *state) keptAddon() (addonArchive, error) {
+	var r release
+	data, err := os.ReadFile(s.path(addonReleaseFile))
+	if err != nil || json.Unmarshal(data, &r) != nil || !r.Verify(releaseKey) || newer(programVersion, r.Version) {
+		return addonArchive{}, errors.New("no kept addon of this release")
+	}
+	file, err := os.Open(s.path(addonFile))
+	if err != nil {
+		return addonArchive{}, err
+	}
+	sum := sha256.New()
+	size, err := io.Copy(sum, file)
+	if err == nil && !strings.EqualFold(hex.EncodeToString(sum.Sum(nil)), r.Addon.SHA256) {
+		err = errors.New("the kept addon does not match its SHA-256")
+	}
+	var files *zip.Reader
+	if err == nil {
+		files, err = zip.NewReader(file, size)
+	}
+	if err != nil {
+		file.Close()
+		return addonArchive{}, err
+	}
+	return addonArchive{Reader: files, file: file}, nil
+}
 
 // setup from a double-click links through the browser, then opens the World Recorder window of the installed
 // program; a bare binary without that window opens the player's World Recorder page instead. Only a failure shows
@@ -57,7 +117,7 @@ func (s *state) installAll(opts options) ([]string, string, error) {
 	}
 	root := i.root
 	opts = pinGameFolder(opts, root)
-	addons, err := installAddon([]string{root})
+	addons, err := s.installAddon(opts.endpoint, []string{root})
 	if err != nil {
 		return nil, "", err
 	}
@@ -89,7 +149,12 @@ func (s *state) installAll(opts options) ([]string, string, error) {
 	return report, exe, nil
 }
 
-func installAddon(roots []string) ([]string, error) {
+func (s *state) installAddon(endpoint string, roots []string) ([]string, error) {
+	files, err := s.addonPackage(endpoint)
+	if err != nil {
+		return nil, err
+	}
+	defer files.Close()
 	var installed []string
 	for _, root := range roots {
 		clients, err := clientsIn(root)
@@ -97,7 +162,7 @@ func installAddon(roots []string) ([]string, error) {
 			return nil, err
 		}
 		for _, i := range clients {
-			if err := addonInto(i); err != nil {
+			if err := addonInto(files, i); err != nil {
 				return nil, err
 			}
 			installed = append(installed, filepath.Join(i.client(), "Interface", "AddOns"))
@@ -109,9 +174,9 @@ func installAddon(roots []string) ([]string, error) {
 	return installed, nil
 }
 
-// addonInto writes the addon built into the program to the client's AddOns folder.
-func addonInto(i install) error {
-	return pathless(placeAddon(addonFiles, filepath.Join(i.client(), "Interface", "AddOns"), i.interfaces))
+// addonInto writes the addon package to the client's AddOns folder.
+func addonInto(files fs.FS, i install) error {
+	return pathless(placeAddon(files, filepath.Join(i.client(), "Interface", "AddOns"), i.interfaces))
 }
 
 // placeAddon writes the new addon beside the installed one and swaps the folders, so the game never sees half of it.
@@ -159,13 +224,23 @@ func addonTOC(i install) string {
 	return filepath.Join(i.client(), "Interface", "AddOns", "WorldRecorder", "WorldRecorder.toc")
 }
 
-// refreshAddons installs the addon built into the program again where the installed TOC differs from the one it would
-// write, as after a game update raised the client's interface numbers, and into a client folder it sees for the first
-// time, as when WoW Forever leaves beta for a client of its own; an addon the player removed stays removed. A client is
-// remembered only once its addon is in place, so an install that failed is tried again at the next refresh.
-func (s *state) refreshAddons(found []install) {
-	built, err := fs.ReadFile(addonFiles, "WorldRecorder/WorldRecorder.toc")
+// refreshAddons installs the addon package again where the installed TOC differs from the one it would write, as after
+// a game update raised the client's interface numbers, and into a client folder it sees for the first time, as when
+// WoW Forever leaves beta for a client of its own; an addon the player removed stays removed. A client is remembered
+// only once its addon is in place, so an install that failed is tried again at the next refresh.
+func (s *state) refreshAddons(endpoint string, found []install) {
+	if len(found) == 0 {
+		return
+	}
+	files, err := s.addonPackage(endpoint)
 	if err != nil {
+		s.log("addon result=failed: %v", err)
+		return
+	}
+	defer files.Close()
+	built, err := fs.ReadFile(files, "WorldRecorder/WorldRecorder.toc")
+	if err != nil {
+		s.log("addon result=failed: %v", err)
 		return
 	}
 	seen, first := s.seenClients()
@@ -177,7 +252,7 @@ func (s *state) refreshAddons(found []install) {
 			handled = remember(handled, i.client())
 			continue
 		}
-		if err := addonInto(i); err != nil {
+		if err := addonInto(files, i); err != nil {
 			s.log("addon result=failed: %v", err)
 			continue
 		}

@@ -59,9 +59,9 @@ func (d *daemon) status() status {
 	v := d.s.readSettings()
 	key, wow, sends := d.s.readKey(), d.gameFolder(), d.s.readSends()
 	saves := findSaves(installs(wow))
-	st := status{App: "world-recorder", API: 1, Version: programVersion(), Platform: runtime.GOOS, Computer: computerName(),
+	st := status{App: "world-recorder", API: 1, Version: programVersion, Platform: runtime.GOOS, Computer: computerName(),
 		Paused: v.Paused, AutoUpdate: v.AutoUpdate, StartAtLogin: loginItemExists(),
-		Folder: folderState(wow), Addon: addonStatus{Bundled: programVersion(), Installed: installedAddon(wow)},
+		Folder: folderState(wow), Addon: addonStatus{Bundled: programVersion, Installed: installedAddon(wow)},
 		Saves: []saveStatus{}, Sends: []sendStatus{}}
 	if key != "" {
 		st.Key = optional(digest(key))
@@ -161,7 +161,7 @@ func (d *daemon) loginArgs() []string {
 }
 
 func (d *daemon) installAddon() error {
-	_, err := installAddon([]string{d.gameFolder()})
+	_, err := d.s.installAddon(d.opts.endpoint, []string{d.gameFolder()})
 	return err
 }
 

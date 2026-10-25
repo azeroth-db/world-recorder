@@ -6,7 +6,7 @@
 local ADDON = ...
 -- The version of this code, kept in the save: the client runs the files it loaded until the next reload, whatever
 -- the folder holds by then. publish.sh checks it against the TOC.
-local VERSION = "1.7.3"
+local VERSION = "1.7.4"
 local frame = CreateFrame("Frame")
 local counted, killed, casts = {}, {}, {}
 local lastCast, lastCastAt
@@ -91,7 +91,14 @@ local function hundredths(v)
   return math.floor(v * 10000 + 0.5) / 100
 end
 
-local function gather(id)
+local function gather(id, guid)
+  -- A loot window can open without a new soft-target event. Keep only the name
+  -- of this exact gathered object, never a nearby or previously selected node.
+  local target = plain(UnitGUID("softinteract"))
+  if target and target == guid then
+    local name = plain(UnitName("softinteract"))
+    if type(name) == "string" and name ~= "" then child(db().names, "GameObject")[id] = name end
+  end
   local map = C_Map.GetBestMapForUnit("player")
   local point = map and C_Map.GetPlayerMapPosition(map, "player")
   -- UnitPosition's first two returns, kept in their own order: the X and Y of the client's map tables.
@@ -593,7 +600,7 @@ local function firstOpen(row, kind, id, guid, spell)
   row.opened = (row.opened or 0) + 1
   if kind == "GameObject" then
     place(child(row, "positions"))
-    gather(id)
+    gather(id, guid)
   elseif kind == "Creature" and not spell then
     kill(guid, id)
     if IsInGroup() then row.groupOpened = (row.groupOpened or 0) + 1 end

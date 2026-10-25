@@ -35,12 +35,14 @@ print(target)
 PYMODE
 )
 ./check-api.sh
-data="$root/.work/world-recorder/LookupData"
-python3 "$root/pipeline/package_recorder_lookup.py" --output "$data"
-python3 "$root/pipeline/package_recorder_lookup.py" --output "$data" --check
 mkdir -p "$root/.work/world-recorder" "$(dirname "$archive")"
 stage=$(mktemp -d "$root/.work/world-recorder/package.XXXXXX")
 trap 'rm -rf "$stage"' EXIT HUP INT TERM
+# Generation, verification and copying belong to this package operation. Another
+# package run must not replace the lookup data after this run has verified it.
+data="$stage/LookupData"
+python3 "$root/pipeline/package_recorder_lookup.py" --output "$data"
+python3 "$root/pipeline/package_recorder_lookup.py" --output "$data" --check
 cp -R WorldRecorder "$stage/WorldRecorder"
 [ ! -e "$stage/WorldRecorder/LookupData" ] || { echo 'Unexpected source lookup data; regenerate in owned staging' >&2; exit 1; }
 # The addon loads only the Lua files; manifest.json is the producer's own check input.

@@ -50,11 +50,9 @@ func programAsset(r *release) asset {
 	return r.Darwin
 }
 
-// programVersion is the version of the addon built into the program; publish.sh releases both under it.
-func programVersion() string {
-	data, _ := fs.ReadFile(addonFiles, "WorldRecorder/WorldRecorder.toc")
-	return tocVersion(data)
-}
+// programVersion is the addon's TOC version, which build.sh sets with -X main.programVersion; publish.sh releases the
+// program and the addon under it.
+var programVersion string
 
 func tocVersion(toc []byte) string {
 	for line := range strings.Lines(string(toc)) {
@@ -85,8 +83,8 @@ func versionPart(parts []string, i int) int {
 	return n
 }
 
-func (d *daemon) fetchRelease() (*release, error) {
-	response, err := get(d.origin + "/assets/world-recorder/release.json")
+func fetchRelease(origin string) (*release, error) {
+	response, err := get(origin + "/assets/world-recorder/release.json")
 	if err != nil {
 		return nil, err
 	}
@@ -108,12 +106,12 @@ func (d *daemon) fetchRelease() (*release, error) {
 // version was already installed once, so a release that does not raise the running version cannot loop, or its
 // download failed since this program started.
 func (d *daemon) checkRelease() {
-	r, err := d.fetchRelease()
+	r, err := fetchRelease(d.origin)
 	if err != nil {
 		d.s.log("release result=failed: %v", err)
 		return
 	}
-	if !newer(r.Version, programVersion()) {
+	if !newer(r.Version, programVersion) {
 		r = nil
 	}
 	d.mu.Lock()
@@ -129,8 +127,8 @@ func (d *daemon) checkRelease() {
 }
 
 func (d *daemon) updateNow() error {
-	r, err := d.fetchRelease()
-	if err != nil || !newer(r.Version, programVersion()) {
+	r, err := fetchRelease(d.origin)
+	if err != nil || !newer(r.Version, programVersion) {
 		return err
 	}
 	return d.applyUpdate(r)
@@ -169,7 +167,7 @@ func (d *daemon) applyUpdate(r *release) error {
 
 // replaceProgram records the version before the swap, so automatic updates never install it twice.
 func (d *daemon) replaceProgram(r *release) (string, error) {
-	program, err := d.download(programAsset(r))
+	program, err := d.s.download(d.origin, programAsset(r))
 	if err != nil {
 		return "", err
 	}
@@ -186,7 +184,7 @@ func programPath(exe string) string {
 	return source
 }
 
-// finishUpdate runs once the new program serves the port: it installs the addon built into it and deletes the
+// finishUpdate runs once the new program serves the port: it installs the addon of its release and deletes the
 // previous program. While the previous program is still exiting on Windows the deletion fails; the next start
 // tries again.
 func (d *daemon) finishUpdate() {
@@ -195,10 +193,10 @@ func (d *daemon) finishUpdate() {
 	if err != nil || json.Unmarshal(data, &u) != nil || !strings.HasSuffix(u.Previous, ".old") {
 		return
 	}
-	if u.Version != programVersion() {
-		d.s.log("update version=%s result=not raised: running %s", u.Version, programVersion())
+	if u.Version != programVersion {
+		d.s.log("update version=%s result=not raised: running %s", u.Version, programVersion)
 	}
-	if installed := installedAddon(d.gameFolder()); installed == nil || *installed != programVersion() {
+	if installed := installedAddon(d.gameFolder()); installed == nil || *installed != programVersion {
 		if err := d.installAddon(); err != nil {
 			d.s.log("addon result=failed: %v", pathless(err))
 		}
@@ -212,8 +210,8 @@ func (d *daemon) finishUpdate() {
 }
 
 // download fetches a file of the release from the site's own origin and keeps it only when its SHA-256 matches.
-func (d *daemon) download(a asset) (string, error) {
-	base, err := url.Parse(d.origin)
+func (s *state) download(origin string, a asset) (string, error) {
+	base, err := url.Parse(origin)
 	if err != nil {
 		return "", err
 	}
@@ -233,7 +231,7 @@ func (d *daemon) download(a asset) (string, error) {
 	if response.StatusCode != http.StatusOK {
 		return "", statusError(response.StatusCode)
 	}
-	file, err := os.CreateTemp(d.s.dir, "download-*")
+	file, err := os.CreateTemp(s.dir, "download-*")
 	if err != nil {
 		return "", err
 	}
