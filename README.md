@@ -1,61 +1,34 @@
 # World Recorder
 
-World Recorder is a WoW Forever addon that records what your client sees while you play:
-drops, kills, skinning and gathering loot, quest givers and quest text, vendors, trainers,
-flight routes and fishing catches. It also keeps a snapshot of each of your characters.
-A companion uploader sends the saved data to [wowdb.wiki](https://wowdb.wiki), where your
-[profile](https://wowdb.wiki/account) shows your characters and what you recorded. Without the
-uploader, send the save file yourself from your
-[World Recorder page](https://wowdb.wiki/account/world-recorder).
+A WoW Forever addon for [wowdb.wiki](https://wowdb.wiki). See your recorded loot and gathering
+on your [World Recorder page](https://wowdb.wiki/account/world-recorder): items by quality,
+looted corpses and objects, and the materials you gathered most.
 
-- Install and downloads: [wowdb.wiki/news/wow-forever-world-recorder](https://wowdb.wiki/news/wow-forever-world-recorder)
-- About the addon: [azeroth-db.github.io/world-recorder.html](https://azeroth-db.github.io/world-recorder.html)
-- Releases: the addon zip, the macOS app and the Windows setup are attached to each [release](https://github.com/azeroth-db/world-recorder/releases).
+![World Recorder showing recorded loot by quality, looted corpses and objects, and gathered materials](https://wowdb.wiki/cdn/guides/world-recorder/enUS/record-c01368854459.webp)
 
-## What it records
+## Install
 
-| Record | Kept |
-|---|---|
-| Loot | per creature or object: windows opened, money, every item with how often it showed and its total quantity |
-| Kills | hostile and neutral creatures seen dead, the denominator of a drop rate |
-| Loot after a cast | skinning, mining, herbalism and pick pocket loot apart from corpse loot |
-| Quests | who gives and who takes each quest, the quest, objective, progress and completion text, rewards |
-| NPC services | vendor wares and prices, trainer lessons, flight routes and fares, gossip options |
-| Fishing | catches per zone and subzone |
-| Creatures | level, classification, health and the spells they cast |
-| Characters | name, realm, guild, level, equipment, talents, Legacy, professions and completed quests |
+Download the addon ZIP from [Releases](https://github.com/azeroth-db/world-recorder/releases)
+and copy its `WorldRecorder` folder into your WoW Forever client's `Interface/AddOns/`.
 
-Quest text keeps your name as the game's own `$n` placeholder. The addon only listens to
-events you cause and never acts for you.
+For the companion uploader and setup instructions, open the
+[World Recorder guide](https://wowdb.wiki/forever/guides/world-recorder).
+The game writes the addon's saved data when you log out, exit or reload the interface.
 
-## Saving
+## Data sent to wowdb.wiki
 
-The game writes addon data when you log out, exit or reload the interface. Type `/wrsave`,
-or click the Save button that `/worldrecorder button` shows, to write it without leaving the
-world. `/worldrecorder` prints what has been recorded so far.
-
-## Without the uploader
-
-Install the addon alone into `World of Warcraft/_forever_/Interface/AddOns/`, play, then log
-out or type `/wrsave`. On your [World Recorder page](https://wowdb.wiki/account/world-recorder),
-signed in, choose `WorldRecorder.lua` under Send a save file. It is in
-`World of Warcraft/_forever_/WTF/Account/<your account>/SavedVariables/`. Send it after each
-session and before a game update: the addon starts its records afresh with every new game
-version. The page converts the file in your browser as the uploader does and sends only it.
-
-## Uploader
-
-The uploader (`uploader/`, Go, standard library only) runs on your computer, watches the
-addon's saved data and sends a changed save to wowdb.wiki with the key of the account you
-linked. Unlink a computer on your wowdb.wiki profile to stop it. `uploader/README.md`
-describes every command, file and request.
+The addon keeps its records on your computer and sends nothing by itself. The companion
+uploader sends them to wowdb.wiki after you link it to your account. Those records include
+loot, kills, quests, NPC services, fishing, creature observations, auction prices and your
+characters' names, realms, guilds, equipment, talents, professions and completed quests.
+Read the [privacy notice](https://wowdb.wiki/privacy) before linking a computer.
 
 ## Build
 
 ```sh
-./package.sh            # addon zip in dist/, after check-api.sh
-uploader/build.sh       # macOS app, universal binary and Windows setup in uploader/dist/, embedding that zip
+./package.sh            # addon ZIP in dist/, after check-api.sh
+uploader/build.sh       # macOS app and Windows setup in uploader/dist/
 ```
 
-`check-api.sh <path to the client's Interface/AddOns>` refuses an addon that calls a
-function WoW Forever's own interface never calls.
+`check-api.sh <path to the client's Interface/AddOns>` checks calls against WoW Forever's
+own interface. The uploader source is in `uploader/`.
