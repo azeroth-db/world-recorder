@@ -200,8 +200,8 @@ Every request is checked in this order:
 
 1. The `Host` header must be `127.0.0.1:47930`. Any other host answers 421, which stops DNS
    rebinding.
-2. The `Origin` header must be the scheme and host of `--endpoint` (`https://wowdb.wiki` by
-   default). Any other origin answers 403. `GET /v1/status` and `GET /v1/events` also answer
+2. The `Origin` header must be the scheme and host of `--endpoint`, `https://azeroth.wiki` or
+   `https://wowdb.wiki`. Any other origin answers 403. `GET /v1/status` and `GET /v1/events` also answer
    a request without `Origin`, so a terminal can read them. A request without `Origin` whose
    `X-Recorder-Control` header equals the token in `control-token` comes from the
    [desktop app](../desktop/README.mdx) and may send every command; every other request
@@ -398,7 +398,7 @@ Delete `ledger.json` to send every save again.
 | Flag | Effect |
 |---|---|
 | `--wow <dir>` | Use this game root or Forever flavor folder; setup validates it and offers the picker if it is invalid. |
-| `--endpoint <url>` | Send to this URL. Default: `https://wowdb.wiki/api/contrib/recorder`. `link` uses the scheme and host of this URL. |
+| `--endpoint <url>` | Send to this URL. Default: `https://azeroth.wiki/api/contrib/recorder`. `link` uses the scheme and host of this URL. A request to `azeroth.wiki` that gets no answer or a 5xx is sent again to `wowdb.wiki`, which serves the same site, and every page the program opens in the browser opens on `wowdb.wiki` while `azeroth.wiki` fails (`network.go`). The site stores a save sent twice once. |
 | `--once` | Make one pass and exit. The exit status is 1 when any save was not sent. |
 
 ## Build

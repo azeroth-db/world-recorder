@@ -32,7 +32,7 @@ func (d *daemon) startControl(window bool) {
 		d.s.log("control result=failed: %v", pathless(err))
 		return
 	}
-	args := []string{"--api", apiAddress, "--state", d.s.dir, "--origin", d.origin, "--program", d.exe}
+	args := []string{"--api", apiAddress, "--state", d.s.dir, "--origin", site(d.origin), "--program", d.exe}
 	if !window {
 		args = append(args, "--tray")
 	}
@@ -47,7 +47,7 @@ func (s *state) openControl(exe, origin string) error {
 	if err != nil {
 		return err
 	}
-	return detached(exec.Command(app, "--api", apiAddress, "--state", s.dir, "--origin", origin, "--program", exe)).Start()
+	return detached(exec.Command(app, "--api", apiAddress, "--state", s.dir, "--origin", site(origin), "--program", exe)).Start()
 }
 
 // controlApp is the desktop app beside this program: in World Recorder.app's Contents/MacOS, beside the bare

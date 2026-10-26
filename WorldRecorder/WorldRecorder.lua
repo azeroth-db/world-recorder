@@ -6,7 +6,7 @@
 local ADDON, ns = ...
 -- The version of this code, kept in the save: the client runs the files it loaded until the next reload, whatever
 -- the folder holds by then. publish.sh checks it against the TOC.
-local VERSION = "1.7.6"
+local VERSION = "1.7.7"
 local frame = CreateFrame("Frame")
 local counted, killed, casts = {}, {}, {}
 local lastCast, lastCastAt

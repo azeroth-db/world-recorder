@@ -93,7 +93,7 @@ func (r *lookupRequests) deliver(s *state, origin, path string, p lookupPacket) 
 	r.opened[click] = true
 	address, err := url.Parse(origin + p.path)
 	if err == nil {
-		err = openBrowser(address.String())
+		err = openBrowser(site(address.String()))
 	}
 	if err != nil {
 		s.log("lookup result=failed path=%s: %v", p.path, err)

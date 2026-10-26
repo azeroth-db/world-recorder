@@ -102,7 +102,7 @@ func (s *state) setup(opts options, dialog bool) error {
 		showDialog(err.Error(), true)
 	case linked:
 		if base, err := siteBase(opts.endpoint); err == nil && s.openControl(exe, base) != nil {
-			openBrowser(base + "/account/world-recorder")
+			openBrowser(site(base + "/account/world-recorder"))
 		}
 	}
 	return err

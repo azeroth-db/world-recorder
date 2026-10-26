@@ -5,6 +5,8 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"net/url"
+	"sync/atomic"
 	"time"
 )
 
@@ -21,8 +23,52 @@ func transport() http.RoundTripper {
 	return t
 }
 
-// do sends the request and ends it once no byte has arrived for originLimit, before the answer or inside its body.
+// The site moves from wowdb.wiki to azeroth.wiki on November 1, 2026, and wowdb.wiki keeps serving it. A request to
+// azeroth.wiki that gets no answer or a server error goes to wowdb.wiki instead; the site stores a resent save once.
+const primaryHost, fallbackHost = "azeroth.wiki", "wowdb.wiki"
+
+var primaryDown atomic.Bool
+
 func do(request *http.Request) (*http.Response, error) {
+	response, err := send(request)
+	if request.URL.Host != primaryHost || request.Context().Err() != nil {
+		return response, err
+	}
+	failed := err != nil || response.StatusCode >= http.StatusInternalServerError
+	primaryDown.Store(failed)
+	if !failed {
+		return response, nil
+	}
+	if response != nil {
+		response.Body.Close()
+	}
+	retry := request.Clone(request.Context())
+	retry.URL.Host, retry.Host = fallbackHost, fallbackHost
+	if request.GetBody != nil {
+		if retry.Body, err = request.GetBody(); err != nil {
+			return nil, err
+		}
+	}
+	return send(retry)
+}
+
+// site is the address a browser opens: on wowdb.wiki while azeroth.wiki does not answer.
+func site(address string) string {
+	u, err := url.Parse(address)
+	if err != nil || u.Host != primaryHost {
+		return address
+	}
+	if response, err := get(u.Scheme + "://" + primaryHost + "/api/version"); err == nil {
+		response.Body.Close()
+	}
+	if primaryDown.Load() {
+		u.Host = fallbackHost
+	}
+	return u.String()
+}
+
+// send sends the request and ends it once no byte has arrived for originLimit, before the answer or inside its body.
+func send(request *http.Request) (*http.Response, error) {
 	ctx, cancel := context.WithCancel(request.Context())
 	idle := time.AfterFunc(originLimit, cancel)
 	response, err := client.Do(request.WithContext(ctx))

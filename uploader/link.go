@@ -53,8 +53,9 @@ func (s *state) link(stop context.Context, endpoint string) error {
 		s.log("link result=failed: %v", err)
 		return err
 	}
-	fmt.Println("Approve World Recorder in your browser:", start.URL)
-	if err := openBrowser(start.URL); err != nil {
+	approval := site(start.URL)
+	fmt.Println("Approve World Recorder in your browser:", approval)
+	if err := openBrowser(approval); err != nil {
 		fmt.Println("Open that address in a browser.")
 	}
 	s.log("link result=started")
@@ -98,7 +99,7 @@ func (s *state) awaitGrant(stop context.Context, listener net.Listener, base, ve
 		if err != nil {
 			target = base + "/account?linked=failed"
 		}
-		http.Redirect(w, r, target, http.StatusSeeOther)
+		http.Redirect(w, r, site(target), http.StatusSeeOther)
 		select {
 		case done <- err:
 		default:
