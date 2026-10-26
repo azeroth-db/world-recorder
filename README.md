@@ -55,13 +55,12 @@ creature observations, auction prices and your characters' names, realms, guilds
 talents, professions and completed quests. Read the [privacy notice](https://azeroth.wiki/privacy)
 before linking a computer.
 
-## Build
+## Feedback
 
-```sh
-./package.sh            # addon ZIP in dist/, after check-api.sh
-uploader/build.sh       # macOS app and Windows setup in uploader/dist/
-```
+Report a bug, suggest a change, or send a correction on [Azeroth DB feedback](https://vote.wowdb.wiki).
 
-`check-api.sh <path to the client's Interface/AddOns>` checks calls against WoW Forever's
-own interface. The program's source is in `uploader/` (Go: watching saves, uploading, linking,
-installing the addon, updating itself) and `desktop/` (its Qt window and tray icon).
+## Source
+
+`WorldRecorder/` holds the addon Lua. `uploader/` contains the Go program for watching saves,
+uploading, linking, installing the addon and updating itself. `desktop/` contains its Qt
+window and tray icon.
