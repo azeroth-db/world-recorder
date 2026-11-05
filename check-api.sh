@@ -15,7 +15,38 @@ set -eu
 cd "$(dirname "$0")"
 ui=${1:-../../data/native-client/wow_classic_beta/1.60.1.70291/enUS/interface/addons}
 missing=0
-[ -d "$ui" ] || { echo "Forever interface sources unavailable: $ui" >&2; exit 1; }
+if [ ! -d "$ui" ]; then
+  # WOW-48 retired the full interface dump. A presentation-only release can reuse
+  # the published package's API proof when its complete call set is identical.
+  # Any API change still requires the native interface sources below.
+  python3 - <<'PY'
+from pathlib import Path
+import hashlib
+import json
+import re
+import zipfile
+
+root = Path('../..')
+release = json.loads((root / 'site/public/assets/world-recorder/release.json').read_text())
+archive = root / 'site/public' / release['addon']['url'].lstrip('/')
+if hashlib.sha256(archive.read_bytes()).hexdigest() != release['addon']['sha256']:
+    raise SystemExit('Published addon does not match its release SHA-256')
+pattern = r'(?:^|[^.:A-Za-z0-9_])((?:C_[A-Za-z]+\.)?[A-Z][A-Za-z0-9_]*)\('
+def calls(text):
+    return set(re.findall(pattern, re.sub(r'--[^\n]*', '', text), re.M))
+current, published = set(), set()
+for file in Path('WorldRecorder').glob('*.lua'):
+    current |= calls(file.read_text())
+with zipfile.ZipFile(archive) as package:
+    for name in package.namelist():
+        if name.startswith('WorldRecorder/') and name.count('/') == 1 and name.endswith('.lua'):
+            published |= calls(package.read(name).decode())
+if current != published:
+    raise SystemExit('Native API calls changed; supply the Forever interface source directory to check-api.sh')
+print(f"Native API call set unchanged from SHA-verified published addon {release['version']}")
+PY
+  exit $?
+fi
 # Check every handwritten Lua module; generated data has no native API calls.
 # The two exact WorldRecorderLookup* globals below are our binding entrypoints,
 # not client APIs (the text scanner also sees their function declarations).

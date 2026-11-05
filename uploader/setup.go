@@ -37,10 +37,10 @@ func (s *state) addonPackage(endpoint string) (addonArchive, error) {
 	}
 	r, err := fetchRelease(origin)
 	if err != nil {
-		return addonArchive{}, fmt.Errorf("The World Recorder addon could not be downloaded from Azeroth DB: %v.", err)
+		return addonArchive{}, fmt.Errorf("The Azeroth Forever: World Recorder addon could not be downloaded from Azeroth DB: %v.", err)
 	}
 	if newer(programVersion, r.Version) {
-		return addonArchive{}, fmt.Errorf("Azeroth DB serves the World Recorder addon %s, older than this program's %s.", r.Version, programVersion)
+		return addonArchive{}, fmt.Errorf("Azeroth DB serves the Azeroth Forever: World Recorder addon %s, older than this program's %s.", r.Version, programVersion)
 	}
 	archive, err := s.download(origin, r.Addon)
 	if err == nil {
@@ -51,7 +51,7 @@ func (s *state) addonPackage(endpoint string) (addonArchive, error) {
 	}
 	if err != nil {
 		os.Remove(archive)
-		return addonArchive{}, fmt.Errorf("The World Recorder addon could not be downloaded from Azeroth DB: %v.", pathless(err))
+		return addonArchive{}, fmt.Errorf("The Azeroth Forever: World Recorder addon could not be downloaded from Azeroth DB: %v.", pathless(err))
 	}
 	return s.keptAddon()
 }
@@ -121,7 +121,7 @@ func (s *state) installAll(opts options) ([]string, string, error) {
 	if err != nil {
 		return nil, "", err
 	}
-	report := []string{"The World Recorder addon is installed in " + strings.Join(addons, " and ") + "."}
+	report := []string{"The Azeroth Forever: World Recorder addon is installed in " + strings.Join(addons, " and ") + "."}
 	if err := s.write("game-folder", []byte(root+"\n")); err != nil {
 		return report, "", pathless(err)
 	}
@@ -139,7 +139,7 @@ func (s *state) installAll(opts options) ([]string, string, error) {
 	stop, cancel := interrupted()
 	defer cancel()
 	if err := s.link(stop, opts.endpoint); err != nil {
-		return report, exe, fmt.Errorf("This computer is not linked to an Azeroth DB account yet (%v). Open World Recorder again to link it.", err)
+		return report, exe, fmt.Errorf("This computer is not linked to an Azeroth DB account yet (%v). Open Azeroth Forever: World Recorder again to link it.", err)
 	}
 	report = append(report, "This computer is now linked to your Azeroth DB account.")
 	// Send at once, so the account page that confirmed the link shows the records while it is open.
@@ -169,7 +169,7 @@ func (s *state) installAddon(endpoint string, roots []string) ([]string, error) 
 		}
 	}
 	if len(installed) == 0 {
-		return nil, errors.New("WoW Forever was not found on this computer. Install it with the Battle.net app, then open World Recorder again.")
+		return nil, errors.New("WoW Forever was not found on this computer. Install it with the Battle.net app, then open Azeroth Forever: World Recorder again.")
 	}
 	return installed, nil
 }

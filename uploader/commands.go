@@ -136,7 +136,7 @@ var errCancelled = errors.New("cancelled")
 
 // chooseFolder opens the folder picker at the current folder, validates the choice as setup does and keeps it.
 func (d *daemon) chooseFolder() error {
-	root, err := pickInstall(d.gameFolder(), "Choose the WoW Forever folder World Recorder reads.")
+	root, err := pickInstall(d.gameFolder(), "Choose the WoW Forever folder Azeroth Forever: World Recorder reads.")
 	if errors.Is(err, errSelectionCancelled) {
 		return errCancelled
 	}

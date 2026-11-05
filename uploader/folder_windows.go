@@ -51,7 +51,7 @@ func selectGameFolder(initial, reason string) (string, error) {
 	if err := comError(dialog.call(9, 0x20|0x40|0x800|0x02000000)); err != nil {
 		return "", err
 	}
-	if err := comError(dialog.call(17, uintptr(unsafe.Pointer(utf16("World Recorder — Select WoW Forever folder"))))); err != nil {
+	if err := comError(dialog.call(17, uintptr(unsafe.Pointer(utf16("Azeroth Forever: World Recorder — Select WoW Forever folder"))))); err != nil {
 		return "", err
 	}
 	if err := comError(dialog.call(18, uintptr(unsafe.Pointer(utf16("Use this folder"))))); err != nil {

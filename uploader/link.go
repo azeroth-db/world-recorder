@@ -27,7 +27,7 @@ type linkStart struct {
 
 var (
 	errLinkExpired = errors.New("the link was not approved in time")
-	errLinkStopped = errors.New("World Recorder was closed before the link was approved")
+	errLinkStopped = errors.New("Azeroth Forever: World Recorder was closed before the link was approved")
 )
 
 // link ends when stop is done, withdrawing the request; the caller decides which signals end it.
@@ -54,7 +54,7 @@ func (s *state) link(stop context.Context, endpoint string) error {
 		return err
 	}
 	approval := site(start.URL)
-	fmt.Println("Approve World Recorder in your browser:", approval)
+	fmt.Println("Approve Azeroth Forever: World Recorder in your browser:", approval)
 	if err := openBrowser(approval); err != nil {
 		fmt.Println("Open that address in a browser.")
 	}

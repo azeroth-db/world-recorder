@@ -1,7 +1,6 @@
--- A checksum of what World Recorder saves, written at logout as WorldRecorderSeal; the site refuses a save whose
--- records no longer give it (site/lib/contrib/seal.ts computes the same sum). A save that no longer matches its seal when
--- the game loads it was edited outside the game: it keeps the seal "edited" from then on, so playing on does not seal the
--- edit again. The code is public, so this stops edits by hand, not a forger.
+-- Legacy checksum, written at logout as WorldRecorderSeal. The site ignores this field per the owner's
+-- 2026-11-05 correction (WOW-102), including the persistent "edited" marker. A failed check does not prove editing.
+-- TODO(WOW-102): revisit integrity checks only after real-client round-trip and data-preserving recovery proof.
 local ADDON, ns = ...
 local P, M = 4294967291, 1000003
 local SEALED = { "WorldRecorderDB", "WorldRecorderCharacters", "WorldRecorderInstall" }

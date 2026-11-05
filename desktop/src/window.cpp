@@ -38,9 +38,9 @@ static const QMap<QString, QString> sendResult = {{"accepted", "Accepted"}, {"du
 
 Window::Window(const Launch &launch)
     : m_launch(launch), m_recorder(launch.api, launch.stateDir), m_body(new QVBoxLayout), m_error(new QLabel) {
-    setWindowTitle(t("World Recorder"));
+    setWindowTitle(t("Azeroth Forever: World Recorder"));
     setObjectName("frame");
-    auto *title = new QLabel(t("World Recorder"));
+    auto *title = new QLabel(t("Azeroth Forever: World Recorder"));
     title->setObjectName("title");
     m_error->setObjectName("error");
     m_error->hide();
@@ -120,7 +120,7 @@ void Window::clear() {
 
 void Window::render() {
     clear();
-    m_error->setText(t("World Recorder could not do that."));
+    m_error->setText(t("Azeroth Forever: World Recorder could not do that."));
     const QJsonObject &status = m_recorder.status();
     if (!m_recorder.reachable())
         renderUnreached();
@@ -146,7 +146,7 @@ void Window::updateTray() {
     m_send->setEnabled(live && status.value("busy").isNull());
     m_pause->setEnabled(live);
     m_pause->setChecked(status.value("paused").toBool());
-    m_tray.setToolTip(t("World Recorder") + (live ? "" : "\n" + t("Not running on this computer")));
+    m_tray.setToolTip(t("Azeroth Forever: World Recorder") + (live ? "" : "\n" + t("Not running on this computer")));
 }
 
 void Window::step(const QString &label, const QString &value, const QString &mark, QWidget *action,
@@ -195,11 +195,11 @@ void Window::programStep(const QJsonObject &status) {
     QWidget *action = target.isEmpty() ? nullptr
         : button(busy == "update" ? t("Updating…") : t("Update to {version}", {{"version", target}}),
                  [this] { m_recorder.command("update"); }, busy.isEmpty());
-    step(t("World Recorder"), text(status.value("version")), target.isEmpty() ? "ready" : "waiting", action);
+    step(t("Azeroth Forever: World Recorder"), text(status.value("version")), target.isEmpty() ? "ready" : "waiting", action);
 }
 
 void Window::renderUnreached() {
-    step(t("World Recorder"), t("Not running on this computer"), "notready",
+    step(t("Azeroth Forever: World Recorder"), t("Not running on this computer"), "notready",
          button(t("Install"), [this] { QProcess::startDetached(m_launch.program, {"setup"}); }));
 }
 
@@ -217,13 +217,13 @@ void Window::renderLive(const QJsonObject &status) {
 
     QJsonObject folder = status.value("folder").toObject(), addon = status.value("addon").toObject();
     bool chosen = folder.value("root").isString() && folder.value("error").isNull();
-    // A client World Recorder does not read yet is named in the player's language; any other problem keeps the program's
+    // A client Azeroth Forever: World Recorder does not read yet is named in the player's language; any other problem keeps the program's
     // own sentence below the request for the folder.
     QStringList unknown;
     for (const QJsonValue &client : folder.value("unknown").toArray())
         unknown << text(client.toObject().value("version"));
     QString value = chosen ? text(folder.value("root")) : unknown.isEmpty() ? t("Choose the World of Warcraft folder.")
-        : t("World Recorder does not read World of Warcraft {version} yet. It updates itself as soon as it can.",
+        : t("Azeroth Forever: World Recorder does not read World of Warcraft {version} yet. It updates itself as soon as it can.",
             {{"version", t.locale().createSeparatedList(unknown)}});
     step(t("Game folder"), value, chosen ? "ready" : "notready",
          button(t("Change"), [this] { m_recorder.command("folder"); }, !busy, "secondary"),
@@ -316,7 +316,7 @@ void Window::removal(bool busy) {
     row->addWidget(button(t("Your records"), [this] { openRecords(); }, true, "secondary"));
     if (m_asking) {
         // The question wraps rather than widening the window.
-        auto *question = new QLabel(t("Remove World Recorder from this computer?"));
+        auto *question = new QLabel(t("Remove Azeroth Forever: World Recorder from this computer?"));
         question->setWordWrap(true);
         question->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
         row->addWidget(question, 1);

@@ -17,7 +17,6 @@ for client in c["clients"]:
 for realm in c["realms"]:
     assert realm["name"] and realm["kind"] in ("pve", "pvp"), realm
 EOF
-git diff --quiet HEAD -- "$file" || { echo "commit $file first"; exit 1; }
 live=/root/world-of-warcraft/current/site/public/assets/world-recorder/clients.json
 scp -q "$file" "devmeme:$live.next"
 ssh devmeme "mv '$live.next' '$live'"

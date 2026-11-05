@@ -9,14 +9,14 @@ DESKTOP = pathlib.Path(__file__).resolve().parent
 SITE = DESKTOP.parents[2] / "site"
 LOCALES = ["enUS", "deDE", "esES", "esMX", "frFR", "koKR", "ptBR", "ruRU", "zhCN", "zhTW"]
 PHRASES = [
-    "World Recorder", "Update to {version}", "Updating…", "Linked as", "Not linked", "Link this computer",
+    "Azeroth Forever: World Recorder", "Update to {version}", "Updating…", "Linked as", "Not linked", "Link this computer",
     "Linking…", "Game folder", "Choose the World of Warcraft folder.",
-    "World Recorder does not read World of Warcraft {version} yet. It updates itself as soon as it can.", "Change", "AddOns", "Missing", "Install",
+    "Azeroth Forever: World Recorder does not read World of Warcraft {version} yet. It updates itself as soon as it can.", "Change", "AddOns", "Missing", "Install",
     "Update", "Saved records", "Saved {date}", "Log out, or type /reload or /wrsave in game.", "Upload", "Paused",
     "Waiting to upload", "Uploaded {date}", "Upload failed", "Refused", "Cannot be read", "Not linked", "Upload now",
     "Pause", "Update automatically", "Start at login", "Upload history", "Accepted", "Already uploaded", "Failed",
-    "Remove from this computer", "Remove World Recorder from this computer?", "Keep", "Not running on this computer",
-    "World Recorder could not do that.", "Your records", "Open", "Close",
+    "Remove from this computer", "Remove Azeroth Forever: World Recorder from this computer?", "Keep", "Not running on this computer",
+    "Azeroth Forever: World Recorder could not do that.", "Your records", "Open", "Close",
 ]
 
 sources = {}

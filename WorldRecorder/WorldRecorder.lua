@@ -6,7 +6,7 @@
 local ADDON, ns = ...
 -- The version of this code, kept in the save: the client runs the files it loaded until the next reload, whatever
 -- the folder holds by then. publish.sh checks it against the TOC.
-local VERSION = "1.7.7"
+local VERSION = "1.7.8"
 local frame = CreateFrame("Frame")
 local counted, killed, casts = {}, {}, {}
 local lastCast, lastCastAt
@@ -648,7 +648,7 @@ local function summary()
   local sources, gathers = 0, 0
   for _, kind in pairs(entry.loot) do sources = sources + count(kind) end
   for _, list in pairs(entry.gathers) do gathers = gathers + #list end
-  print(("World Recorder %s: %d quest givers, %d quest turn-ins, %d creatures, %d loot sources, %d gathers."):format(
+  print(("Azeroth Forever: World Recorder %s: %d quest givers, %d quest turn-ins, %d creatures, %d loot sources, %d gathers."):format(
     entry.build, count(entry.givers), count(entry.enders), count(entry.creatures), sources, gathers))
 end
 
@@ -1131,7 +1131,7 @@ local function reads()
   for key, row in pairs(db().auctions) do
     local at = row.read
     if at then
-      print(("World Recorder %s %s: %s, %d/%d auctions, %.1f s, %d slices, slowest %.1f ms, %.0f ms billed, limit %s ms/s burst %s ms."):format(
+      print(("Azeroth Forever: World Recorder %s %s: %s, %d/%d auctions, %.1f s, %d slices, slowest %.1f ms, %.0f ms billed, limit %s ms/s burst %s ms."):format(
         at.v, key, at.outcome, at.done, at.total or 0, at.seconds or 0, at.slices, at.slowest, at.billed, at.rate, at.burst))
     end
   end

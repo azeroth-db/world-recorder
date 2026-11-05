@@ -173,7 +173,7 @@ func showDialog(text string, failed bool) {
 	if failed {
 		icon = mbIconError
 	}
-	messageBox.Call(0, uintptr(unsafe.Pointer(utf16(text))), uintptr(unsafe.Pointer(utf16("World Recorder"))), icon|mbSetForeground)
+	messageBox.Call(0, uintptr(unsafe.Pointer(utf16(text))), uintptr(unsafe.Pointer(utf16("Azeroth Forever: World Recorder"))), icon|mbSetForeground)
 }
 
 func register(exe string, args []string) error {

@@ -67,7 +67,7 @@ static Launch launchOptions(const QCommandLineParser &args) {
 
 int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
-    QApplication::setApplicationName("World Recorder");
+    QApplication::setApplicationName("Azeroth Forever: World Recorder");
     QApplication::setApplicationVersion(APP_VERSION);
     QApplication::setQuitOnLastWindowClosed(false);
     // The window is dark, so its title bar is too, whatever the system's appearance.

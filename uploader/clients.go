@@ -41,7 +41,7 @@ var (
 	known   []gameClient
 )
 
-var errNoClients = errors.New("World Recorder has not read the WoW Forever versions it supports from Azeroth DB yet. Connect to the internet and open World Recorder again.")
+var errNoClients = errors.New("Azeroth Forever: World Recorder has not read the WoW Forever versions it supports from Azeroth DB yet. Connect to the internet and open Azeroth Forever: World Recorder again.")
 
 func (c gameClient) reads(version string) bool {
 	return slices.ContainsFunc(c.Builds, func(prefix string) bool { return strings.HasPrefix(version, prefix) })

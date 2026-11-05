@@ -112,7 +112,7 @@ func (s *state) status(wow string) error {
 	}
 	saves := findSaves(found)
 	if len(saves) == 0 {
-		fmt.Println("no World Recorder saves found")
+		fmt.Println("no Azeroth Forever: World Recorder saves found")
 	}
 	for i, sv := range saves {
 		fmt.Printf("%d. %s: %s\n", i+1, sv.flavor, s.saveStatus(sv))

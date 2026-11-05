@@ -1,9 +1,11 @@
-# World Recorder uploader
+# Azeroth Forever: World Recorder — Windows uploader
 
-The uploader sends what the World Recorder addon records to `https://wowdb.wiki`. It runs
+The uploader sends what the World Recorder addon records to `https://azeroth.wiki`. It runs
 on the player's computer next to World of Warcraft. It reads the addon's SavedVariables
 file, converts it to JSON, compresses it and sends it when it has changed since the last
 accepted send.
+
+**Current platform (owner, November 5; WOW-106): Windows only.** The macOS standalone app is retired. macOS users install the addon and upload `WorldRecorder.lua` from `_forever_/WTF/Account/<account-number>/SavedVariables/` at [their signed-in upload page](https://azeroth.wiki/account/world-recorder). Existing macOS implementation details below are retained for old installations, not current installation/build instructions. Historical signed archives and user saves are preserved. New release manifests keep empty Darwin signature fields for compatibility with installed Windows verifiers and publish no macOS program.
 
 ## How it works
 
@@ -109,7 +111,7 @@ a newer version and automatic updates are on, the uploader updates itself (see
    [World Recorder window](../desktop/README.mdx), or that page when the window cannot start.
    Only a failure shows a dialog.
 
-Setup needs the network: it downloads the addon from wowdb.wiki, and linking needs the site too.
+Setup needs the network: it downloads the addon from azeroth.wiki, and linking needs the site too.
 
 ### Addon package
 
@@ -153,7 +155,7 @@ the loopback API port.
 
 ## Link to an account
 
-Every send carries the key of the player's wowdb.wiki account, so a moderator can stop
+Every send carries the key of the player's azeroth.wiki account, so a moderator can stop
 records from an account that sends false data. `link` gets the key:
 
 1. It listens on `127.0.0.1` and sends `POST /api/contrib/link` with the computer name, the
@@ -191,7 +193,7 @@ restart.
 
 ## Loopback API
 
-The running uploader (`run` without `--once`) serves the wowdb.wiki World Recorder page on
+The running uploader (`run` without `--once`) serves the azeroth.wiki World Recorder page on
 `127.0.0.1:47930`. The page reads the uploader's state and sends it commands from the
 player's browser; nothing passes through wowdb.wiki. The contract, with the status fields and
 every command, is [Loopback API, version 1](../../../docs/world-recorder-control.mdx#loopback-api-version-1).
@@ -390,7 +392,7 @@ Delete `ledger.json` to send every save again.
 | none | `setup` when started without a terminal, otherwise `run`. |
 | `setup` | Install the uploader and the addon, register the login item, link when no key is stored or the site refuses it, then open the World Recorder window; a failure shows a dialog. |
 | `install` | `setup`, printing the result instead of a dialog. |
-| `link` | Link this computer to a wowdb.wiki account and store the key. |
+| `link` | Link this computer to an azeroth.wiki account and store the key. |
 | `run` | Make a pass, then serve the loopback API, watch the saves and send until stopped. |
 | `uninstall` | Remove the login item. |
 | `status` | Print the install id, whether a key is stored, why the game folder holds no accepted client when it holds none and, for each save found, its flavor and whether it is sent. |
@@ -403,26 +405,18 @@ Delete `ledger.json` to send every save again.
 
 ## Build
 
-Go 1.26 or later, standard library only, on macOS (the script uses `lipo`, `codesign` and
-`ditto`), with the [desktop app's build tools](../desktop/README.mdx#build):
+Go 1.26 or later and the [Windows desktop build tools](../desktop/README.mdx#build):
 
 ```bash
 tools/world-recorder/uploader/build.sh
 ```
 
-It builds the desktop app into `control/` (the universal macOS app, signed ad hoc, and each of its slices, which the macOS
-program of that architecture embeds; the Windows app, which the Windows program embeds) and
-builds with `CGO_ENABLED=0`, `-trimpath`, `-buildvcs=false` and
-`-X main.programVersion=<the addon's TOC version>`. `GOLDFLAGS` passes linker flags
-to `go build`; a test build serves another port under another login item with
-`GOLDFLAGS="-X main.apiAddress=127.0.0.1:<port> -X main.agentLabel=<label>"`. It writes to `dist/`:
+The script builds the Windows desktop executable into `control/World Recorder.exe`, embeds it in the uploader,
+and writes only `dist/WorldRecorderSetup.exe`. It uses `CGO_ENABLED=0`, `GOOS=windows`, `GOARCH=amd64`,
+`-trimpath`, `-buildvcs=false` and `-X main.programVersion=<the addon's TOC version>`.
+`GOLDFLAGS` remains available for an isolated verification build. `dist/` and `control/` are ignored build output.
+A direct build uses `GOOS=windows GOARCH=amd64 go build` after the desktop executable exists.
 
-| File | Content |
-|---|---|
-| `wowdb-recorder-darwin` | The macOS binary for Apple silicon and Intel, joined with `lipo` and signed ad hoc. |
-| `World Recorder.app` | The app: that binary as `Contents/MacOS/wowdb-recorder`, the universal desktop app as `Contents/MacOS/World Recorder`, and an `Info.plist` with the addon's TOC version, `LSUIElement` set and an ad hoc signature over the bundle. |
-| `WorldRecorder-mac.zip` | The app, zipped with `ditto`. |
-| `WorldRecorderSetup.exe` | The Windows binary for x86-64. |
-
-`dist/` and `control/` are not tracked. A plain `go build` needs `control/` from a previous
-`build.sh` run and carries no version.
+The release publisher signs the Windows program and addon archive. The legacy Darwin fields are empty; it does
+not build, sign, zip or publish a macOS app. `install.sh` is a retirement notice pointing to browser uploads and
+performs no installation, account change or deletion.

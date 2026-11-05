@@ -1,0 +1,127 @@
+# Azeroth Forever: World Recorder — Windows desktop app
+
+The desktop app is the Windows program’s window and tray icon. It is a Qt 6 Widgets program in C++ (`src/`), statically linked. The macOS standalone app is retired by the November 5 owner instruction (WOW-106); macOS players use the addon and browser upload. Historical macOS implementation details below document existing installations only. The recorder program
+(`../uploader`) keeps doing the work: watching saves, uploading, linking, installing the addon and updating
+itself. The app only shows the program's state and sends its commands.
+
+## What it shows
+
+The window repeats the profile page's "This computer" panel (`site/components/accounts/ThisComputer.tsx`), step by
+step:
+
+| Step | Ready when | Command |
+|---|---|---|
+| World Recorder | no newer release | Update to the newer version |
+| Linked as | the program holds an account key | Link this computer |
+| Game folder | a known WoW Forever client is chosen | Change |
+| AddOns | the installed addon is the program's version | Install or Update |
+| Saved records | the game wrote a save | |
+| Upload | every save is uploaded | |
+
+Below the steps: Upload now, Pause, Update automatically, Start at login, the upload history, Your records (the
+player's World Recorder page on the site) and Remove from this computer. When the program does not answer, the
+window says so and offers Install, which runs the program's `setup`.
+
+The window is as wide as its widest row needs, at least 640 pixels, and as tall as its wrapped
+text at that width, so no line is cut in any language; the player does not resize it. The game
+folder's error from the program (English) shows as a second, wrapped line under that step.
+Controls the program cannot run while it is busy are disabled until it is done.
+
+The tray menu holds Open, Upload now, Pause, Your records and Close. Close ends the app; the program keeps
+uploading, and the app starts again with the program.
+
+## How it reaches the program
+
+The app reads `GET /v1/events` on the program's loopback address (`127.0.0.1:47930`) and redraws on every status
+event. It sends the `POST /v1/...` commands of the [loopback API](../uploader/README.mdx#loopback-api) with the
+header `X-Recorder-Control`. Its value is the token the program writes to `control-token` in its state folder
+each time it starts. The program accepts a command carrying the token without the site origin. When the stream
+ends (the program stopped or restarts for an update), the window shows the program as not running and reconnects
+every 2 seconds.
+
+The program passes its address, state folder, site origin and its own path as `--api`, `--state`, `--origin` and
+`--program`.
+
+## How it starts
+
+- The program starts the app with `--tray` each time it binds the loopback port: at login, after a restart and
+  after an update.
+- A double-click of the downloaded program runs `setup`, which opens the window.
+- One app runs per user, named by a local socket (`wowdb-world-recorder-<user>`). A second start hands its
+  request (`show` or `tray` and its version) to the running app, which shows the window. When the versions differ,
+  the running app quits and the new one takes its place, so after an update the program's own app runs.
+- On macOS the app never shows a Dock icon.
+- On Windows the starting app allows the running one to bring its window to the front
+  (`AllowSetForegroundWindow`) before it hands over, because Windows lets only the process the
+  player started take the foreground.
+
+## Current Windows distribution and historical macOS compatibility
+
+The program carries the app: `uploader/control_darwin.go` and `uploader/control_windows.go` embed it, and the
+program writes it next to itself as `World Recorder` (macOS) or `World Recorder.exe` (Windows) whenever the copy
+there differs. `World Recorder.app` also ships it in `Contents/MacOS`, beside `wowdb-recorder`.
+
+So every installed program gets the app through its own automatic update, with no change to the update a program
+1.6.19 or older runs:
+
+- Windows: the old program swaps `wowdb-recorder.exe` for the new `WorldRecorderSetup.exe` and starts it; the new
+  program writes `World Recorder.exe` beside it and starts it.
+- macOS, installed from `World Recorder.app`: the old program replaces the app with the new one from
+  `WorldRecorder-mac.zip`; its archive holds no symbolic links, which the old program's unzip refuses.
+  The app ships the universal desktop app, and each slice of the program embeds its own slice of
+  that file byte for byte, so the program finds the bundle's copy current, never rewrites it and
+  the bundle's signature stays valid.
+- macOS, installed from `install.sh` (a bare `wowdb-recorder`): the old program takes only `wowdb-recorder` from
+  the archive; the new program writes `World Recorder` beside itself.
+
+## Build
+
+`../uploader/build.sh` builds only the Windows app and uploader; `../publish.sh` runs it. CMake refuses a non-Windows target. Cross-compilation on this Mac uses CMake, Ninja, `mingw-w64`, Qt host tools (`QT_HOST`, default `.work/qt/mac`) and the Windows Qt build (`QT_WIN`, default `.work/qt/win`). The host tools are build dependencies, not a macOS application release.
+
+`strings.py` writes `resources/strings.json` from the site's interface resources
+(`site/i18n/features/*/phrases.json`, `site/locales/`) for the site's ten languages, and fails when a phrase lacks
+one. The app picks the language the system's interface uses (`QLocale::uiLanguages`), not its
+region format; dates and sizes follow that language. Fonts are the client's Friz Quadrata and Morpheus; button and frame
+textures are the site's copies of the client's (`site/public/ui/`). The client draws its
+button and check box highlights with additive blending, so `button-hover.png`,
+`checkbox-hover.png` and `checkbox-checked-hover.png` are the up texture with the highlight
+added, and the checked boxes are the up texture with the check over it, all at the client's
+32 pixels for check boxes. The app asks for the dark colour scheme, so the title bar is dark
+on a light system too.
+
+<a id="build-qt" />
+
+### Build Qt
+
+Qt 6.12.0 `qtbase` only, static, from
+`https://download.qt.io/official_releases/qt/6.12/6.12.0/submodules/qtbase-everywhere-src-6.12.0.tar.xz`,
+unpacked in `.work/qt/`:
+
+```sh
+# macOS, arm64 and x86_64
+mkdir build-mac && cd build-mac
+../qtbase-everywhere-src-6.12.0/configure -static -release -prefix "$PWD/../mac" -nomake examples -nomake tests \
+  -no-feature-sql -no-openssl -no-dbus -no-feature-printsupport -no-feature-testlib -no-feature-concurrent \
+  -- -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" -DCMAKE_OSX_DEPLOYMENT_TARGET=12.0
+cmake --build . --parallel && cmake --install .
+
+# Windows x86_64, cross-compiled with mingw-w64 against the macOS build's host tools
+mkdir ../build-win && cd ../build-win
+../qtbase-everywhere-src-6.12.0/configure -static -release -prefix "$PWD/../win" -qt-host-path "$PWD/../mac" \
+  -xplatform win32-g++ -nomake examples -nomake tests -no-feature-sql -no-openssl -no-dbus \
+  -no-feature-printsupport -no-feature-testlib -no-feature-concurrent -no-zstd -no-icu -qt-zlib -qt-libpng \
+  -qt-libjpeg -qt-freetype -qt-harfbuzz -qt-pcre \
+  -- -DCMAKE_TOOLCHAIN_FILE=<pack>/tools/world-recorder/desktop/mingw.cmake
+cmake --build . --parallel && cmake --install .
+```
+
+### Historical size and macOS distribution (through 1.7.7)
+
+The static Qt app adds about 17 MB per macOS architecture and about 32 MB on Windows: version
+1.7.0's `WorldRecorder-mac.zip` and `WorldRecorderSetup.exe` are about 43 MB each, against
+12 MB and 11 MB for 1.6.19. The downloads stay one file per system and need no runtime
+installed, which the old programs' updater requires.
+
+`install.sh` keeps installing the bare `wowdb-recorder`: `setup` copies either form into the
+same configuration folder, and the bare program writes the desktop app beside itself, so the
+app form gives a terminal install nothing more than a larger download.

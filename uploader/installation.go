@@ -107,7 +107,7 @@ func (u unknownClients) Error() string {
 	for i, c := range u {
 		named[i] = fmt.Sprintf("World of Warcraft %s in its %s folder", c.Version, c.Folder)
 	}
-	return fmt.Sprintf("This folder holds %s, which World Recorder does not read yet.", strings.Join(named, " and "))
+	return fmt.Sprintf("This folder holds %s, which Azeroth Forever: World Recorder does not read yet.", strings.Join(named, " and "))
 }
 
 func unknownClient(root string, active map[string]string) error {

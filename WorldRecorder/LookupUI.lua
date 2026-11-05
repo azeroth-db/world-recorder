@@ -444,7 +444,7 @@ SLASH_WORLDRECORDERLOOKUPMETRICS1 = "/wrlookupmetrics"
 SlashCmdList.WORLDRECORDERLOOKUPMETRICS = function()
   UpdateAddOnMemoryUsage()
   local m = lookup.metrics
-  print(("World Recorder lookup: initialization %.3f ms; UI %.3f ms; last search %.3f ms; last detail %.3f ms; %d selected requests; addon %.1f KiB"):format(
+  print(("Azeroth Forever: World Recorder lookup: initialization %.3f ms; UI %.3f ms; last search %.3f ms; last detail %.3f ms; %d selected requests; addon %.1f KiB"):format(
     m.initializationMilliseconds, m.createMilliseconds or 0, m.searchMilliseconds, m.detailMilliseconds, m.requests, GetAddOnMemoryUsage(ADDON)))
 end
 
