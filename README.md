@@ -1,12 +1,12 @@
 # World Recorder
 
-A WoW Forever addon and a desktop program for [Azeroth DB](https://wowdb.wiki). The addon records
+A WoW Forever addon and a desktop program for [Azeroth DB](https://azeroth.wiki). The addon records
 your loot, kills, quests, NPC services, fishing, auction prices and your characters while you play;
 the program sends them to your Azeroth DB account after every logout. See them on your
-[World Recorder page](https://wowdb.wiki/account/world-recorder): items by quality, looted corpses
+[World Recorder page](https://azeroth.wiki/account/world-recorder): items by quality, looted corpses
 and objects, and the materials you gathered most.
 
-![World Recorder showing recorded loot by quality, looted corpses and objects, and gathered materials](https://wowdb.wiki/cdn/guides/world-recorder/enUS/record-c01368854459.webp)
+![World Recorder showing recorded loot by quality, looted corpses and objects, and gathered materials](https://azeroth.wiki/cdn/guides/world-recorder/enUS/record-c01368854459.webp)
 
 ## Install with the program
 
@@ -21,10 +21,10 @@ tray icon (the menu bar on macOS) show each step, from the addon to the last upl
 2. Run it. It finds your WoW Forever folder, installs the addon and opens Azeroth DB in your browser
    to link this computer to your account.
 
-   ![Azeroth DB asks whether to link the computer that runs World Recorder to your account](https://wowdb.wiki/cdn/guides/world-recorder/enUS/approve-93c5004a1416.webp)
+   ![Azeroth DB asks whether to link the computer that runs World Recorder to your account](https://azeroth.wiki/cdn/guides/world-recorder/enUS/approve-93c5004a1416.webp)
 3. Play as usual. The program starts with your computer and sends each save the game writes.
 
-The [World Recorder guide](https://wowdb.wiki/forever/guides/world-recorder) covers the warnings
+The [World Recorder guide](https://azeroth.wiki/forever/guides/world-recorder) covers the warnings
 Windows and macOS show for new downloads.
 
 ## Install the addon alone
@@ -32,10 +32,10 @@ Windows and macOS show for new downloads.
 1. Download `WorldRecorder-<version>.zip` from the [latest release](https://github.com/azeroth-db/world-recorder/releases/latest)
    and copy its `WorldRecorder` folder into `World of Warcraft/_forever_/Interface/AddOns/`.
 2. Play, then log out or type `/wrsave`: the game writes the addon's save.
-3. Open your [World Recorder page](https://wowdb.wiki/account/world-recorder) signed in and choose
+3. Open your [World Recorder page](https://azeroth.wiki/account/world-recorder) signed in and choose
    `World of Warcraft/_forever_/WTF/Account/<your account>/SavedVariables/WorldRecorder.lua`.
 
-   ![The World Recorder page: Send a save file, with where the game keeps the save and the answer once it arrived](https://wowdb.wiki/cdn/guides/world-recorder/enUS/send-1ac111c2ecc6.webp)
+   ![The World Recorder page: Send a save file, with where the game keeps the save and the answer once it arrived](https://azeroth.wiki/cdn/guides/world-recorder/enUS/send-1ac111c2ecc6.webp)
 
 Send the file after each session and before a game update: the records start over when the game
 version changes. At each login the addon names the program, which sends the file for you.
@@ -52,12 +52,12 @@ The addon keeps its records on your computer and sends nothing by itself. The pr
 to Azeroth DB after you link it to your account; without the program, only the file you choose on
 your World Recorder page is sent. Those records include loot, kills, quests, NPC services, fishing,
 creature observations, auction prices and your characters' names, realms, guilds, equipment,
-talents, professions and completed quests. Read the [privacy notice](https://wowdb.wiki/privacy)
+talents, professions and completed quests. Read the [privacy notice](https://azeroth.wiki/privacy)
 before linking a computer.
 
 ## Feedback
 
-Report a bug, suggest a change, or send a correction on [Azeroth DB feedback](https://vote.wowdb.wiki).
+Report a bug, suggest a change, or send a correction on [Azeroth DB feedback](https://vote.azeroth.wiki).
 
 ## Source
 
