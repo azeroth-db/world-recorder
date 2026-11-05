@@ -40,11 +40,11 @@ Windows and macOS show for new downloads.
 Send the file after each session and before a game update: the records start over when the game
 version changes. At each login the addon names the program, which sends the file for you.
 
-## Edited saves
+## Keep your saved records
 
-From version 1.7.5 every save carries a checksum of its records (`WorldRecorderSeal`). Azeroth DB
-refuses a save that was changed after the game wrote it, and the addon keeps such a save marked.
-To record again, delete `WorldRecorder.lua` from the `SavedVariables` folder.
+Keep `WorldRecorder.lua` and its `.bak` backup in the `SavedVariables` folder. If an earlier upload
+said the save was changed, upload the original file again. Azeroth DB no longer blocks uploads on that
+checksum, and you do not need to edit or delete your recorded data.
 
 ## Data sent to Azeroth DB
 
